@@ -19,8 +19,10 @@ class UDP_Sock:
         self.sock.bind((host, port))
         self.runningflag = False
         self.stopflag = False
+        self.thread = None
         
     def __del__(self):
+        self.stop()
         self.sock.close()
         
     def send(self, message):
@@ -39,12 +41,17 @@ class UDP_Sock:
         host = self.host
         if host == ALL_INTERFACES:
             host = ALL_HOSTS
-        while not self.stopflag:
-            if (elapsed >= timeout): break
-            self.sock.sendto(message, (host, self.port))
-            time.sleep(timestep)
-            elapsed += timestep
-        self.stopflag = False
+        def loop():
+            nonlocal elapsed
+            while not self.stopflag:
+                if (elapsed >= timeout): break
+                self.sock.sendto(message, (host, self.port))
+                time.sleep(timestep)
+                elapsed += timestep
+            self.stopflag = False
+            self.runningflag = False
+        self.thread = task.ThreadTask(loop)()
+        
     
     def recv(self, timeout=1, buffsize = 4096):
         self.sock.settimeout(timeout)
@@ -55,37 +62,75 @@ class UDP_Sock:
             return None
     
     def stop(self):
-        self.runningflag = False
         self.stopflag = True        
+        self.thread = None
 
 
 EXPECTED_HOSTS = []
 class TCP_Sock:
-    def __init__(self, host, port):
+    def __init__(self, host, port, is_server=False):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind((host, port))
+        self.conn = None
         self.connected = False
-    
+        self.stopflag = False
+        self.is_server = is_server
+        if is_server:
+            self.sock.bind((host, port))
+            self.sock.listen(5)
+        else:
+            self.sock.connect((host,port))
+            
     def __del__(self):
         self.sock.close()
-    
-    def listen(self, backlog=5):
-        self.sock.listen(backlog)
-    
+
+    def stop(self):
+        self.stopflag = True
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+        
     def accept(self):
-        while not self.connected:
-            client_socket, client_address = self.sock.accept()
-            if (client_address[0] not in EXPECTED_HOSTS):
-                client_socket.close()
-                EventHandler.connection_rejected(client_address[0])
+        if not self.is_server:
+            return
+        while not self.connected and not self.stopflag:
+            conn, address = self.sock.accept()
+            if (address[0] not in EXPECTED_HOSTS):
+                conn.close()
+                EventHandler.connection_rejected(address[0])
                 continue
             self.connected = True
-            self.client_socket = client_socket
-            self.client_address = client_address
-            EventHandler.connection_accepted(client_address[0])
+            self.conn = conn
+            # self.address = address
+            EventHandler.connection_accepted(address[0])
+            
+        if (self.stopflag):
+            self.stopflag = False
     
-    def connect(self):
-        self.sock.connect((self.host, self.port))
+    def send(self, message):
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        
+        target = self.conn if self.is_server and self.conn else self.sock
+        
+        try:
+            target.sendall(message)
+        except (ConnectionError, AttributeError) as e:
+            print(f"Send failed: {e}")
+            self.stop()
     
+    def recv(self, timeout=1, buffsize=4096):
+        target = self.conn if self.is_server and self.conn else self.sock
+        if not target:
+            return None
+            
+        target.settimeout(timeout)
+        try:
+            data = target.recv(buffsize)
+            return data
+        except socket.timeout:
+            return None
+        except ConnectionError:
+            self.stop()
+            return None

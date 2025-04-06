@@ -12,7 +12,6 @@ import json
 
 import pygame
 
-import 
 
 RUN = True
 WIN_X,WIN_Y = 1280, 720
@@ -70,15 +69,24 @@ def draw_text(text, x, y, surf = window, font = DefaultFont, color=(0,0,0)):
     surf.blit(font.render(text,True,color), (x,y))
 
 class MessageBox:
-    def __init__(self, message, font, timeout):
+    def __init__(self, message, timeout, font=DefaultFont, fontcolor=(0,0,0), backcolor=(220,220,220)):
         self.message = message
         self.font = font
+        self.fontcolor = fontcolor
+        self.backcolor = backcolor
         (self.size_x, self.size_y) = self.font.size(self.message)
         self.timeout = timeout
         self.created = time.time()
         
     def draw(self, surf, x:int, y:int):
-        pygame.draw.rect(surf, (25,25,25), pygame.Rect(x, y, self.size_x*1.2, self.size_y*1.2), border_radius=1)
-        draw_text(self.message, x + 0.1*self.size_x, y + 0.1*self.size_y, font=self.font, surf=surf)
+        pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x*1.2, self.size_y*1.2), border_radius=1)
+        draw_text(self.message, x + 0.1*self.size_x, y + 0.1*self.size_y, font=self.font, surf=surf, color=self.fontcolor)
 
 MBs: list[MessageBox] = []
+
+
+def ERROR(message: str, duration: float=3):
+    MBs.append(MessageBox(message, duration, fontcolor=(255,0,0)))
+    
+def LOG(message: str, duration: float=3):
+    MBs.append(MessageBox(message, duration))
