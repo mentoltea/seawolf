@@ -1,7 +1,5 @@
-from common import *
 from logic import *
-
-
+from common import *
 
 def get_trans(Surf, width, height, angle):
     return pygame.transform.rotate(pygame.transform.scale(Surf, (int(round(width)), int(round(height)))), int(round(angle)))
@@ -14,7 +12,10 @@ def window_update():
     mb_y = 0
     for box in MBs:
         box.draw(window, 0, mb_y)
-        mb_y += box.size_y
+        mb_y += box.size_y+1
+    
+    for button in active_buttons:
+        button.draw(window)
     
     wn.blit(get_trans(window, RES_CURRENT[0], RES_CURRENT[1], 0), (0,0))
 

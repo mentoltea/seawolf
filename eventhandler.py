@@ -47,3 +47,6 @@ class EventHandler:
         pass
     
     
+    def quit():
+        pass
+    

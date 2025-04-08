@@ -11,11 +11,12 @@
 # 3 - killed cell
 
 
-from common import *
+import common
 
 ALPLABET = 'abcdefghij'
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
-gamestate = GameState.MAIN_MENU
+last_gamestate = None
+gamestate = common.GameState.MAIN_MENU
 
 
 def empty_map(default=0) -> list[list[int]]:
