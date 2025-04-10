@@ -19,6 +19,7 @@ UDP: connection.UDP_Sock = None
 
 open_hosts: list[str] = [] #adresses
 open_hosts_buttons: list[common.ButtonInteractive] = []
+open_hosts_page_label: common.Label = None
 open_hosts_page = 0
 open_hosts_onepage = 5
 open_hosts_update_task: task.ThreadTask = None
@@ -38,8 +39,8 @@ def open_hosts_update_func():
         rcv = UDP.recv(2)
         if (rcv):
             (data, addr) = rcv
-            if (addr[0] in open_hosts or addr[0] in MYADRRESS):
-                continue
+            # if (addr[0] in open_hosts or addr[0] in MYADRRESS):
+            #     continue
             jsondata: map[str, typing.Any] = common.json.loads(data)
             if ("type" in jsondata 
                 and isinstance(jsondata["type"], str) 
@@ -80,6 +81,26 @@ def open_hosts_update_func():
                     common.LOG(addr[0] + ": " + "Invalid json file structure")
     open_hosts_update_task = None
 
+def validate_page():
+    global open_hosts_page, open_hosts_onepage
+    if (open_hosts_page<0):
+        open_hosts_page=0
+        common.INFO("Negative pages are out of range")
+        return
+    
+    maxpage = len(open_hosts_buttons) // (open_hosts_onepage + 1)
+    
+    if (open_hosts_page > maxpage):
+        open_hosts_page=maxpage
+        common.INFO("Page is out of range")
+        return
+    
+    
+def open_hosts_page_add(num: int):
+    global open_hosts_page
+    open_hosts_page += num
+    validate_page()
+
 
 def all_update():
     mb_y = 0
@@ -98,7 +119,7 @@ def all_update():
     
 
 def main_menu_update():
-    global UDP, open_hosts_update_task
+    global UDP, open_hosts_update_task, open_hosts_page_label
     
     if (game.last_gamestate != game.gamestate):
         quit_button = common.ButtonInteractive(
@@ -120,12 +141,57 @@ def main_menu_update():
         clear_hosts_button = common.ButtonInteractive(
             text = "Clear Update",
             position=(0,0),
-            callback = open_hosts_clear
+            callback = open_hosts_clear,
+            center=True
         )
         
         clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
                                        common.WIN_Y - 10 - clear_hosts_button.size_y)
         common.active_buttons.append(clear_hosts_button)
+        
+        
+        ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
+            text = ">",
+            position=(0,0),
+            callback = task.BasicTask(
+                open_hosts_page_add,
+                1
+            ),
+            center=True
+        )
+        ohpnb.position = (
+            clear_hosts_button.position[0] + clear_hosts_button.size_x - ohpnb.size_x,
+            clear_hosts_button.position[1] - ohpnb.size_y - 10,
+        )
+        common.active_buttons.append(ohpnb)
+
+        ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
+            text = "<",
+            position=(0,0),
+            callback = task.BasicTask(
+                open_hosts_page_add,
+                -1
+            ),
+            center=True
+        )
+        ohppb.position = (
+            clear_hosts_button.position[0],
+            clear_hosts_button.position[1] - ohpnb.size_y - 10,
+        )
+        common.active_buttons.append(ohppb)
+        
+        open_hosts_page_label = common.Label(
+            text="0/0",
+            position=(0,0),
+            center=True
+        )
+        open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*10
+        open_hosts_page_label.size_y = ohppb.size_y
+        
+        open_hosts_page_label.position = (
+            ohppb.position[0] + ohppb.size_x + 10,
+            ohppb.position[1],    
+        )
         
     
     if UDP==None:
@@ -148,13 +214,18 @@ def main_menu_update():
                     }
                 }
             ),
-            timestep=5
+            timestep=2
         )
         common.LOG("Broadcast started")
     
-    padx = 10
+    padx = 50
     pady = 10
     cury = 0
+    
+    validate_page()
+    maxpage = len(open_hosts_buttons) // (open_hosts_onepage + 1)
+    open_hosts_page_label.set_text(f"{open_hosts_page+1}/{maxpage+1}")
+    
     for i in range(0, open_hosts_onepage):
         idx = open_hosts_page*open_hosts_onepage + i
         if (idx >= len(open_hosts_buttons)): break

@@ -126,14 +126,12 @@ def INFO(message: str, duration: float=3):
     
     
 
-class ButtonInteractive:
-    def __init__(self, text, position, callback, oneclick=False, font=DefaultFont, fontcolor=(0,0,0), backcolor=(210,210,220),
+class Label:
+    def __init__(self, text, position, center=False, font=DefaultFont, fontcolor=(0,0,0), backcolor=(235,235,235),
                  add=None):
         self.text = text
         self.position = position
-        self.callback = callback
-        self.clicks = 0
-        self.oneclick = oneclick
+        self.center = center
         
         self.font = font
         self.fontcolor = fontcolor
@@ -146,8 +144,28 @@ class ButtonInteractive:
         
     def draw(self, surf:pygame.Surface):
         pygame.draw.rect(surf, self.backcolor, pygame.Rect(self.position[0], self.position[1], self.size_x, self.size_y), border_radius=2)
-        draw_text(self.text, self.position[0] + 0.1*self.size_x, self.position[1] + 0.1*self.size_y, font=self.font, surf=surf, color=self.fontcolor)
+        text_x = self.position[0] + 0.1*self.size_x
+        text_y = self.position[1] + 0.1*self.size_y
+        if self.center:
+            text_x = self.position[0] + self.size_x/2 - self.text_size_x/2
+            text_y = self.position[1] + self.size_y/2 - self.text_size_y/2
+        draw_text(self.text, text_x, text_y, font=self.font, surf=surf, color=self.fontcolor)
+        
+    def set_text(self, newtext: str):
+        self.text = newtext
+        (self.text_size_x, self.text_size_y) = self.font.size(self.text)
 
+
+active_labels: list[Label] = []
+
+class ButtonInteractive(Label):
+    def __init__(self, text, position, callback, center=False, oneclick=False, font=DefaultFont, fontcolor=(0,0,0), backcolor=(210,210,220),
+                 add=None):
+        super().__init__(text, position, center, font, fontcolor, backcolor, add)
+        self.callback = callback
+        self.clicks = 0
+        self.oneclick = oneclick
+    
     def avtivate(self):
         if (self.oneclick and self.clicks>0):
             return

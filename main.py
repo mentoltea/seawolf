@@ -1,6 +1,6 @@
 # import common
 from window_module import *
-
+from logic import *
 
 # MBs.append(MessageBox("Test message for 5 seconds", 5, fontcolor=(255,0,0)))
 # MBs.append(MessageBox("Test message for 2 seconds", 2))

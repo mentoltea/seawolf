@@ -1,4 +1,5 @@
-from logic import *
+# from logic import *
+import logic
 from common import *
 
 def get_trans(Surf, width, height, angle):
@@ -8,7 +9,10 @@ def get_trans(Surf, width, height, angle):
 def all_window_update():
     for button in active_buttons:
         button.draw(window)
-
+    
+    for label in active_labels:
+        label.draw(window)
+        
 def all_window_postupdate():
     mb_y = 0
     for box in MBs:
@@ -16,12 +20,14 @@ def all_window_postupdate():
         mb_y += box.size_y+1
 
 def main_menu_window_update():
-    for i in range(0, open_hosts_onepage):
-        idx = open_hosts_page*open_hosts_onepage + i
-        if (idx >= len(open_hosts_buttons)): break
+    for i in range(0, logic.open_hosts_onepage):
+        idx = logic.open_hosts_page*logic.open_hosts_onepage + i
+        if (idx >= len(logic.open_hosts_buttons)): break
         
-        button = open_hosts_buttons[idx]
+        button: logic.common.ButtonInteractive = logic.open_hosts_buttons[idx]
         button.draw(window)
+    
+    logic.open_hosts_page_label.draw(window)
 
 def preparing_menu_window_update():
     pass
@@ -35,14 +41,14 @@ def window_update():
     
     
     all_window_update()
-    match game.gamestate:
-        case common.GameState.MAIN_MENU:
+    match logic.game.gamestate:
+        case logic.common.GameState.MAIN_MENU:
             main_menu_window_update()
         
-        case common.GameState.PREPARING_MENU:
+        case logic.common.GameState.PREPARING_MENU:
             preparing_menu_window_update()
         
-        case common.GameState.GAME_MENU:
+        case logic.common.GameState.GAME_MENU:
             game_menu_window_update()
     all_window_postupdate()
     
