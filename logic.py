@@ -23,6 +23,7 @@ open_hosts_page_label: common.Label = None
 open_hosts_page = 0
 open_hosts_onepage = 5
 open_hosts_update_task: task.ThreadTask = None
+open_hosts_selfhost_label = None
 
 def host_is_choosen(username, addr):
     print(f"Choosen host {username} :: {addr[0]}:{addr[1]}")
@@ -39,8 +40,8 @@ def open_hosts_update_func():
         rcv = UDP.recv(2)
         if (rcv):
             (data, addr) = rcv
-            # if (addr[0] in open_hosts or addr[0] in MYADRRESS):
-            #     continue
+            if (addr[0] in open_hosts or addr[0] in MYADRRESS):
+                continue
             jsondata: map[str, typing.Any] = common.json.loads(data)
             if ("type" in jsondata 
                 and isinstance(jsondata["type"], str) 
@@ -88,14 +89,19 @@ def validate_page():
         common.INFO("Negative pages are out of range")
         return
     
-    maxpage = len(open_hosts_buttons) // (open_hosts_onepage + 1)
+    maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
     
     if (open_hosts_page > maxpage):
         open_hosts_page=maxpage
         common.INFO("Page is out of range")
         return
     
-    
+
+def open_host_maxpage() -> int:
+    N = len(open_hosts_buttons)
+    if (N==0): return 0
+    return (N-1)//open_hosts_onepage
+
 def open_hosts_page_add(num: int):
     global open_hosts_page
     open_hosts_page += num
@@ -139,7 +145,7 @@ def main_menu_update():
         common.active_buttons.append(quit_button)
         
         clear_hosts_button = common.ButtonInteractive(
-            text = "Clear Update",
+            text = "Clear / Update",
             position=(0,0),
             callback = open_hosts_clear,
             center=True
@@ -151,7 +157,7 @@ def main_menu_update():
         
         
         ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
-            text = ">",
+            text = " > ",
             position=(0,0),
             callback = task.BasicTask(
                 open_hosts_page_add,
@@ -166,7 +172,7 @@ def main_menu_update():
         common.active_buttons.append(ohpnb)
 
         ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
-            text = "<",
+            text = " < ",
             position=(0,0),
             callback = task.BasicTask(
                 open_hosts_page_add,
@@ -185,11 +191,11 @@ def main_menu_update():
             position=(0,0),
             center=True
         )
-        open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*10
+        open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
         open_hosts_page_label.size_y = ohppb.size_y
         
         open_hosts_page_label.position = (
-            ohppb.position[0] + ohppb.size_x + 10,
+            ohppb.position[0] + ohppb.size_x + 5,
             ohppb.position[1],    
         )
         
@@ -210,7 +216,7 @@ def main_menu_update():
                     "add" : {
                         "game" : "seawolf",
                         "version" : common.VERSION,
-                        "name" : MYUSERNAME
+                        "name" : ""#MYUSERNAME
                     }
                 }
             ),
@@ -223,7 +229,8 @@ def main_menu_update():
     cury = 0
     
     validate_page()
-    maxpage = len(open_hosts_buttons) // (open_hosts_onepage + 1)
+    # print(len(open_hosts_buttons))
+    maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
     open_hosts_page_label.set_text(f"{open_hosts_page+1}/{maxpage+1}")
     
     for i in range(0, open_hosts_onepage):
