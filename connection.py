@@ -3,6 +3,8 @@ from eventhandler import *
 # import socket
 # import time
 
+LOCAL_INFO = socket.gethostbyname_ex(socket.gethostname())
+
 ALL_INTERFACES = '0.0.0.0'
 ALL_HOSTS = '255.255.255.255'
 UDP_BROADCAST_PORT = 6969 # constant
@@ -25,10 +27,10 @@ class UDP_Sock:
         self.stop()
         self.sock.close()
         
-    def send(self, message):
+    def send(self, message, host, port):
         if isinstance(message, str):
             message = message.encode('utf-8')
-        self.sock.sendto(message, (self.host, self.port))
+        self.sock.sendto(message, (host, port))
         
     def start_sending(self, message, timestep = 1, timeout = float('inf')):
         if self.runningflag:

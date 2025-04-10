@@ -1,3 +1,5 @@
+VERSION = "1.0.0"
+
 import sys
 import os
 
@@ -99,6 +101,7 @@ EVENTS: list[pygame.event.Event] = []
 
 mouse_clicked: bool = False
 mouse_pos: tuple[int, int] = (0,0)
+mouse_button: int = None
 
 def inrange(value, vmin, vmax) -> bool:
     if (value >= vmin and value <= vmax): return True
@@ -124,7 +127,8 @@ def INFO(message: str, duration: float=3):
     
 
 class ButtonInteractive:
-    def __init__(self, text, position, callback, oneclick=False, font=DefaultFont, fontcolor=(0,0,0), backcolor=(210,210,220)):
+    def __init__(self, text, position, callback, oneclick=False, font=DefaultFont, fontcolor=(0,0,0), backcolor=(210,210,220),
+                 add=None):
         self.text = text
         self.position = position
         self.callback = callback
@@ -137,7 +141,9 @@ class ButtonInteractive:
         (self.text_size_x, self.text_size_y) = self.font.size(self.text)
         self.size_x = self.text_size_x*1.2
         self.size_y = self.text_size_y*1.2
-    
+        
+        self.add = add # additional info (not used in class)
+        
     def draw(self, surf:pygame.Surface):
         pygame.draw.rect(surf, self.backcolor, pygame.Rect(self.position[0], self.position[1], self.size_x, self.size_y), border_radius=2)
         draw_text(self.text, self.position[0] + 0.1*self.size_x, self.position[1] + 0.1*self.size_y, font=self.font, surf=surf, color=self.fontcolor)

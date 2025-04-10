@@ -30,7 +30,7 @@ while common.RUN:
         if (event.type == pygame.MOUSEBUTTONDOWN):
             common.mouse_clicked = True
             common.mouse_pos = pygame.mouse.get_pos()
-            # print(common.mouse_pos)
+            common.mouse_button = event.button
     
     
     game_update()
