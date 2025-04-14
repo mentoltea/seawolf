@@ -1,9 +1,9 @@
-from common import *
-
+# from common import *
+import common
 
 class EventHandler:
-    def connection_requested():
-        pass
+    def connection_requested(username, addr):
+        common.LOG("Connection requested" + " : " + addr[0])
     
     def connection_accepted():
         pass

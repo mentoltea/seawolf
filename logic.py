@@ -1,32 +1,8 @@
-import common
-# from common import *
-import tasks.task as task
-import game
-# from game import *
-import connection
-# from connection import *
-import eventhandler
-import typing
-# from eventhandler import *
-
-
-MYUSERNAME = connection.LOCAL_INFO[0]
-MYADRRESS = [ip for ip in connection.LOCAL_INFO[2] if not ip.startswith("127.")]
-
-print(MYADRRESS, MYUSERNAME)
-
-UDP: connection.UDP_Sock = None
-
-open_hosts: list[str] = [] #adresses
-open_hosts_buttons: list[common.ButtonInteractive] = []
-open_hosts_page_label: common.Label = None
-open_hosts_page = 0
-open_hosts_onepage = 5
-open_hosts_update_task: task.ThreadTask = None
-open_hosts_selfhost_label = None
+from prelogic import *
+import messages
 
 def host_is_choosen(username, addr):
-    print(f"Choosen host {username} :: {addr[0]}:{addr[1]}")
+    pass
 
 def open_hosts_clear():
     open_hosts.clear()
@@ -42,24 +18,15 @@ def open_hosts_update_func():
             (data, addr) = rcv
             if (addr[0] in open_hosts or addr[0] in MYADRRESS):
                 continue
+            
             jsondata: map[str, typing.Any] = common.json.loads(data)
-            if ("type" in jsondata 
-                and isinstance(jsondata["type"], str) 
-                and jsondata["type"] == common.MessageType.BROADCAST):
-                try:
+            if (not messages.check_udp_message_validation(jsondata, addr)):
+                continue
+                
+            match(jsondata["type"]):
+                case common.MessageType.BROADCAST:  
                     add = jsondata["add"]
-                    if add["game"] != "seawolf":
-                        common.LOG(addr[0] + ": " + "Different game")
-                        continue
-                    if add["version"] != common.VERSION:
-                        common.LOG(addr[0] + ": " + f"Different versions - {common.VERSION} and {add["version"]}")
-                        continue
                     username = add["name"]
-                    username = username[0:16]
-                    if not isinstance(username, str):
-                        common.LOG(addr[0] + ": " + f"Invalid name")
-                        continue
-                    
                     
                     new_btn = common.ButtonInteractive(
                             text= f"{username} : {addr[0]}",
@@ -78,8 +45,11 @@ def open_hosts_update_func():
                     open_hosts.append(addr[0])
                     
                     common.LOG(addr[0] + ": " + common.json.dumps(add))
-                except Exception as e:
-                    common.LOG(addr[0] + ": " + "Invalid json file structure")
+                
+                case common.MessageType.REQUEST_CONN:
+                    eventhandler.EventHandler.connection_requested(username=username,
+                                                                   addr=addr)
+            
     open_hosts_update_task = None
 
 def validate_page():
@@ -109,9 +79,13 @@ def open_hosts_page_add(num: int):
 
 
 def all_update():
+    # print(common.active_dialog)
+    if (common.active_dialog == None and len(common.dialogs)>0):
+        common.active_dialog = common.dialogs.pop(0)
+    
     mb_y = 0
     for box in common.MBs:
-        if ((common.time.time() - box.timeout >= box.created ) 
+        if ((common.time.time() - box.created >=  box.timeout) 
             or (common.mouse_clicked and common.mouse_button == 1 and common.inrange(common.mouse_pos[0], 0, box.size_x) and common.inrange(common.mouse_pos[1], mb_y, mb_y + box.size_y))):
             common.MBs.remove(box)
         mb_y += box.size_y+1
@@ -123,11 +97,40 @@ def all_update():
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
     
+    if (common.active_dialog):
+        if (common.mouse_clicked 
+            and common.mouse_button == 1):
+            common.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
+            
+        # print(common.active_dialog.timeout)
+        if (common.time.time() - common.active_dialog.created_at >= common.active_dialog.timeout):
+            common.active_dialog = None
+            
+        
+    
 
 def main_menu_update():
     global UDP, open_hosts_update_task, open_hosts_page_label
     
     if (game.last_gamestate != game.gamestate):
+        common.dialogs.append(
+            common.Dialog(
+                text= "It is main menu!",
+                button_left= common.ButtonInteractive(
+                    text= "Close",
+                    position=(0,0),
+                    callback= None
+                ),
+                button_right= common.ButtonInteractive(
+                    text= "Not close",
+                    position=(0,0),
+                    callback= None
+                ),
+                timeout=5
+            )
+        )
+        
+        
         quit_button = common.ButtonInteractive(
             text = "Quit",
             position=(0,0),
@@ -210,16 +213,7 @@ def main_menu_update():
         
     if (not UDP.runningflag):
         UDP.start_sending(
-            common.json.dumps(
-                {
-                    "type" : common.MessageType.BROADCAST,
-                    "add" : {
-                        "game" : "seawolf",
-                        "version" : common.VERSION,
-                        "name" : ""#MYUSERNAME
-                    }
-                }
-            ),
+            messages.broadcast_message(),
             timestep=2
         )
         common.LOG("Broadcast started")

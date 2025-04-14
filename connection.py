@@ -9,9 +9,9 @@ ALL_INTERFACES = '0.0.0.0'
 ALL_HOSTS = '255.255.255.255'
 UDP_BROADCAST_PORT = 6969 # constant
 
-TCP_INCOMING_PORT = UDP_BROADCAST_PORT + 1 # constant
+TCP_PORT = UDP_BROADCAST_PORT + 1 # constant
 
-TCP_OUTCOMING_PORT = UDP_BROADCAST_PORT + 2 # depends on host's port
+# TCP_OUTCOMING_PORT = UDP_BROADCAST_PORT + 2 # depends on host's port
 
 class UDP_Sock:
     def __init__(self, host, port):

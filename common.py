@@ -1,5 +1,4 @@
-VERSION = "1.0.0"
-
+import version
 import sys
 import os
 
@@ -58,7 +57,7 @@ pygame.init()
 pygame.mixer.init()
 
 
-wn = pygame.display.set_mode((WIN_X,WIN_Y), vsync=1)
+wn = pygame.display.set_mode((WIN_X,WIN_Y), pygame.SRCALPHA, vsync=1)
 RES_CURRENT = (WIN_X, WIN_Y)
 
 
@@ -67,8 +66,8 @@ pygame.display.set_caption("seawolf")
 clock = pygame.time.Clock()
 
 
-window = pygame.Surface((RES_FORM[0], RES_FORM[1]))
-background = pygame.Surface((RES_FORM[0], RES_FORM[1]))
+window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
+background = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
 
 DefaultFont = pygame.font.Font(pygame.font.match_font('timesnewroman'), 18)
 def draw_text(text, x, y, surf = window, font = DefaultFont, color=(0,0,0)):
@@ -187,6 +186,114 @@ class ButtonInteractive(Label):
             return
         if (self.callback != None): self.callback()
         self.clicks += 1
+    
+    def click_check(self, x, y):
+        if (inrange(x, self.position[0], self.position[0] + self.size_x) and inrange(y, self.position[1], self.position[1] + self.size_y)):
+            self.avtivate()
+            # print("click button")
+            return True
+        return False
 
 
 active_buttons: list[ButtonInteractive] = []
+
+
+class Dialog:
+    def __init__(self,
+                 text: str,
+                 button_left: ButtonInteractive = None,
+                 button_right: ButtonInteractive = None,
+                 timeout = float('inf'),
+                 on_timeout_call = None):
+        self.label = Label(text=text, 
+                           position=(0,0), 
+                           center=True)
+        
+        self.backcolor = tuple(map(lambda v: max(0, v), list(self.label.backcolor)))
+        
+        self.button_count = 0
+        button_size_x = 10
+        button_size_y = 10
+        
+        self.button_left = button_left
+        if (button_left != None):
+            self.button_count += 1
+            button_size_x += button_left.size_x
+            button_size_y += button_left.size_y
+        
+        self.button_right = button_right
+        if (button_right != None):
+            self.button_count += 1
+            button_size_x += button_right.size_x
+            if (not button_left):
+                button_size_y += button_left.size_y
+        
+        if (self.button_count == 1):
+            self.button_center = self.button_left if self.button_left != None else self.button_right
+        
+        self.timeout = timeout
+        self.created_at = time.time()
+        self.on_timeout_call = on_timeout_call
+        
+        self.content_size_x = max(self.label.size_x, button_size_x)
+        self.content_size_y = self.label.size_y + button_size_y + 10
+
+        self.size_x = min(self.content_size_x*1.1, self.content_size_x + 10*2)
+        self.size_y = min(self.content_size_y*1.1, self.content_size_y + 10*2)
+
+        x = (WIN_X - self.size_x)/2
+        y = (WIN_Y - self.size_y)/2
+        
+        self.label.position = (
+            x + self.size_x/2 - self.label.size_x/2,
+            y + 10,
+        )
+        if (self.button_count == 1):
+            self.button_center.position = (
+                x + self.size_x/2 - self.button_center.size_x/2,
+                y + self.size_y - self.button_center.size_y - 15,
+            )
+        elif (self.button_count == 2):
+            self.button_left.position = (
+                x + 10,
+                y + self.size_y - self.button_left.size_y - 15,
+            )
+                
+            
+            self.button_right.position = (
+                x + self.size_x - self.button_right.size_x - 10,
+                y + self.size_y - self.button_right.size_y - 15,
+            )
+    
+    def __del__(self):
+        if (self.on_timeout_call):
+            self.on_timeout_call()
+    
+    def draw(self, surf: pygame.Surface):
+        x = (WIN_X - self.size_x)/2
+        y = (WIN_Y - self.size_y)/2
+        
+        # surf.fill((200,200,200,0))
+        pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2, width=2)
+        
+        
+        self.label.draw(surf)
+        
+        if (self.button_count == 1):
+            self.button_center.draw(window)          
+        elif (self.button_count == 2):
+            self.button_left.draw(window)    
+            self.button_right.draw(window)          
+                
+        timefull = 1 - (time.time() - self.created_at)/self.timeout
+        pygame.draw.rect(surf, color_inverse(self.label.backcolor), pygame.Rect(x, y + self.size_y*0.95, self.size_x*timefull, self.size_y*0.05), border_radius=1)
+
+    def click_check(self, x, y):
+        # print("click")
+        if ((self.button_left and self.button_left.click_check(x, y)) 
+            or (self.button_right and self.button_right.click_check(x, y))):
+            self.timeout = 0
+            # print("clicked")
+
+active_dialog: Dialog = None
+dialogs: list[Dialog] = []

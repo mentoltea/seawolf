@@ -1,6 +1,6 @@
 # import common
 from window_module import *
-from logic import *
+# from logic import *
 
 # MBs.append(MessageBox("Test message for 5 seconds", 5, fontcolor=(255,0,0)))
 # MBs.append(MessageBox("Test message for 2 seconds", 2))
@@ -8,14 +8,14 @@ from logic import *
 try:
     1/0
 except Exception as e:
-    ERROR(str(e))
+    common.ERROR(str(e))
 
 
 
 common.LOGS_ENABLED = True
 
 while common.RUN:
-    clock.tick(FPS)
+    common.clock.tick(common.FPS)
     # game.last_gamestate = game.gamestate
     
     common.mouse_clicked = False
@@ -24,7 +24,7 @@ while common.RUN:
     for event in common.EVENTS:
         if (event.type == pygame.QUIT):
             common.RUN = False
-            eventhandler.EventHandler.quit()
+            logic.eventhandler.EventHandler.quit()
             break
         
         if (event.type == pygame.MOUSEBUTTONDOWN):
@@ -33,7 +33,7 @@ while common.RUN:
             common.mouse_button = event.button
     
     
-    game_update()
+    logic.game_update()
     window_update()
     
     pygame.display.update()
