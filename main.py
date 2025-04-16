@@ -11,7 +11,7 @@ messages = logic.messages
 pygame = window_module.pygame
 
 try:
-    1/0
+    1/0 # type: ignore
 except Exception as e:
     common.ERROR(str(e))
 

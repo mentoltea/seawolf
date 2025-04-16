@@ -17,12 +17,12 @@ common = connection.common
 
 ALPLABET = 'abcdefghij'
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
-last_gamestate = None
-gamestate = common.GameState.MAIN_MENU
+last_gamestate: str|None = None
+gamestate: str = common.GameState.MAIN_MENU
 
 
-def empty_map(default=0) -> list[list[int]]:
-    return [[default for j in range(10)] for i in range(10)]
+def empty_map(default:int=0) -> list[list[int]]:
+    return [[default for _ in range(10)] for _ in range(10)]
 
 def ispos(pos: str) -> bool:
     if len(pos) != 2: return False

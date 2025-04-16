@@ -24,7 +24,7 @@ TCP_PORT = UDP_BROADCAST_PORT + 1 # constant
 # TCP_OUTCOMING_PORT = UDP_BROADCAST_PORT + 2 # depends on host's port
 
 class UDP_Sock:
-    def __init__(self, host, port):
+    def __init__(self, host:str, port:int):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -37,12 +37,12 @@ class UDP_Sock:
         self.stop()
         self.sock.close()
         
-    def send(self, message, host, port):
+    def send(self, message: str | bytes, host: str, port: int):
         if isinstance(message, str):
             message = message.encode('utf-8')
         self.sock.sendto(message, (host, port))
         
-    def start_sending(self, message, timestep = 1, timeout = float('inf')):
+    def start_sending(self, message: str | bytes, timestep: float = 1, timeout: float = float('inf')):
         if self.runningflag:
             return
         self.runningflag = True
@@ -65,7 +65,7 @@ class UDP_Sock:
         self.thread = task.ThreadTask(loop)()
         
     
-    def recv(self, timeout=1, buffsize = 4096):
+    def recv(self, timeout: float=1, buffsize: int = 4096):
         self.sock.settimeout(timeout)
         try:
             data, addr = self.sock.recvfrom(buffsize)
@@ -80,7 +80,7 @@ class UDP_Sock:
 
 EXPECTED_HOSTS = []
 class TCP_Sock:
-    def __init__(self, host, port, is_server=False):
+    def __init__(self, host: str, port: str, is_server:bool=False):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -110,17 +110,17 @@ class TCP_Sock:
             conn, address = self.sock.accept()
             if (address[0] not in EXPECTED_HOSTS):
                 conn.close()
-                eventhandler.EventHandler.connection_rejected(address[0])
+                eventhandler.EventHandler.connection_rejected(address[0]) # type: ignore
                 continue
             self.connected = True
             self.conn = conn
             # self.address = address
-            eventhandler.EventHandler.connection_accepted(address[0])
+            eventhandler.EventHandler.connection_accepted(address[0]) # type: ignore
             
         if (self.stopflag):
             self.stopflag = False
     
-    def send(self, message):
+    def send(self, message:str|bytes):
         if isinstance(message, str):
             message = message.encode('utf-8')
         
@@ -132,7 +132,7 @@ class TCP_Sock:
             print(f"Send failed: {e}")
             self.stop()
     
-    def recv(self, timeout=1, buffsize=4096):
+    def recv(self, timeout:float=1, buffsize:int=4096):
         target = self.conn if self.is_server and self.conn else self.sock
         if not target:
             return None

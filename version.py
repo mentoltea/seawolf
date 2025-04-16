@@ -1,2 +1,2 @@
-VERSION = "1.0.0"
-GAME = "seawolf"
+VERSION: str = "1.0.0"
+GAME: str = "seawolf"

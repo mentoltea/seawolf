@@ -8,7 +8,7 @@ pygame = common.pygame
 # import pygame
 # import common
 
-def get_trans(Surf, width, height, angle):
+def get_trans(Surf : pygame.Surface, width: float, height: float, angle: float):
     return pygame.transform.rotate(pygame.transform.scale(Surf, (int(round(width)), int(round(height)))), int(round(angle)))
     #return pygame.transform.scale(pygame.transform.rotate(Surf, int(round(angle))), (int(round(width)),int(round(height))))
 
@@ -24,7 +24,7 @@ def all_window_update():
         common.active_dialog.draw(common.window)
         
 def all_window_postupdate():
-    mb_y = 0
+    mb_y: float = 0
     for box in common.MBs:
         box.draw(common.window, 0, mb_y)
         mb_y += box.size_y+1
@@ -61,6 +61,9 @@ def window_update():
         
         case logic.common.GameState.GAME_MENU:
             game_menu_window_update()
+        
+        case _:
+            pass
     all_window_postupdate()
     
     common.wn.blit(get_trans(common.window, common.RES_CURRENT[0], common.RES_CURRENT[1], 0), (0,0))

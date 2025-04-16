@@ -1,8 +1,9 @@
 import prelogic
+import typing
 
 common = prelogic.common
 
-def check_udp_message_validation(jsondata: map, addr: tuple[str,str]) -> bool:
+def check_udp_message_validation(jsondata: dict[str, typing.Any], addr: tuple[str,str]) -> bool:
     if ("type" in jsondata 
         and isinstance(jsondata["type"], str)):
         try:
@@ -21,11 +22,11 @@ def check_udp_message_validation(jsondata: map, addr: tuple[str,str]) -> bool:
                 return False
             
             return True
-        except Exception as e:
+        except Exception:
             # print(e)
             common.LOG(addr[0] + ": " + "Invalid json file structure")
             # print(jsondata)
-        return False
+    return False
 
 
 def broadcast_message() -> str:
@@ -52,7 +53,7 @@ def request_connection_message() -> str:
         }
     )
 
-def accept_connection_message(port=prelogic.connection.TCP_PORT) -> str:
+def accept_connection_message(port: int = prelogic.connection.TCP_PORT) -> str:
     return common.json.dumps(
         {
             "type" : f"{common.MessageType.ANSWER_CONN}",
@@ -68,7 +69,7 @@ def accept_connection_message(port=prelogic.connection.TCP_PORT) -> str:
         }
     )
 
-def reject_connection_message(port=prelogic.connection.TCP_PORT) -> str:
+def reject_connection_message(port:int = prelogic.connection.TCP_PORT) -> str:
     return common.json.dumps(
         {
             "type" : f"{common.MessageType.ANSWER_CONN}",

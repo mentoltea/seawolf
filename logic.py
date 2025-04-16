@@ -18,7 +18,7 @@ task = prelogic.task
 # import game
 # import tasks.task as task
 
-def host_is_choosen(username, addr):
+def host_is_choosen(username: str, addr: tuple[str,str]):
     print(username, addr)
     # pass
 
@@ -36,15 +36,15 @@ def open_hosts_update_func():
             if (addr[0] in prelogic.open_hosts or addr[0] in prelogic.MYADRRESS):
                 continue
             
-            jsondata: map[str, typing.Any] = json.loads(data)
+            jsondata: dict[str, typing.Any] = json.loads(data)
             if (not messages.check_udp_message_validation(jsondata, addr)):
                 continue
+            
+            add: dict[str, typing.Any] = jsondata["add"]
+            username: str = add["name"]
                 
-            match(jsondata["type"]):
+            match(jsondata["type"]): # type: ignore
                 case common.MessageType.BROADCAST:  
-                    add = jsondata["add"]
-                    username = add["name"]
-                    
                     new_btn = common.ButtonInteractive(
                             text= f"{username} : {addr[0]}",
                             position= (0,0),
@@ -135,11 +135,11 @@ def main_menu_update():
                     position=(0,0),
                     callback= None
                 ),
-                button_right= common.ButtonInteractive(
-                    text= "Not close",
-                    position=(0,0),
-                    callback= None
-                ),
+                # button_right= common.ButtonInteractive(
+                #     text= "Not close",
+                #     position=(0,0),
+                #     callback= None
+                # ),
                 timeout=5
             )
         )
@@ -173,7 +173,8 @@ def main_menu_update():
         common.active_buttons.append(clear_hosts_button)
         
         
-        ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
+        # ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
+        ohpnb = common.ButtonInteractive(
             text = " > ",
             position=(0,0),
             callback = task.BasicTask(
@@ -188,7 +189,8 @@ def main_menu_update():
         )
         common.active_buttons.append(ohpnb)
 
-        ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
+        # ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
+        ohppb = common.ButtonInteractive(
             text = " < ",
             position=(0,0),
             callback = task.BasicTask(
@@ -280,6 +282,9 @@ def game_update():
         
         case common.GameState.GAME_MENU:
             game_menu_update()
-            
+        
+        case _:
+            pass
+        
     game.last_gamestate = game.gamestate
         
