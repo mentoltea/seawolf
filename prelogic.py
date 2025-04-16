@@ -1,13 +1,16 @@
-import common
-# from common import *
-import tasks.task as task
 import game
-# from game import *
-import connection
-# from connection import *
-import eventhandler
+# import connection
+
+connection = game.connection
+common = game.common
+task = common.task
+eventhandler = connection.eventhandler
+
 import typing
-# from eventhandler import *
+
+# import common
+# import tasks.task as task
+# import eventhandler
 
 
 MYUSERNAME = connection.LOCAL_INFO[0]

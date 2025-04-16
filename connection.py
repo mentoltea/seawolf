@@ -1,7 +1,17 @@
-from common import *
-from eventhandler import *
+# from common import *
+# from eventhandler import *
+# import common
+import eventhandler
+
+common = eventhandler.common
+socket = common.socket
+time = common.time
+task = common.task
 # import socket
 # import time
+# import tasks.task as task
+
+
 
 LOCAL_INFO = socket.gethostbyname_ex(socket.gethostname())
 
@@ -100,12 +110,12 @@ class TCP_Sock:
             conn, address = self.sock.accept()
             if (address[0] not in EXPECTED_HOSTS):
                 conn.close()
-                EventHandler.connection_rejected(address[0])
+                eventhandler.EventHandler.connection_rejected(address[0])
                 continue
             self.connected = True
             self.conn = conn
             # self.address = address
-            EventHandler.connection_accepted(address[0])
+            eventhandler.EventHandler.connection_accepted(address[0])
             
         if (self.stopflag):
             self.stopflag = False

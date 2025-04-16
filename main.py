@@ -1,10 +1,15 @@
+import window_module
 # import common
-from window_module import *
-# from logic import *
+# import prelogic
+# import logic
+# import messages
 
-# MBs.append(MessageBox("Test message for 5 seconds", 5, fontcolor=(255,0,0)))
-# MBs.append(MessageBox("Test message for 2 seconds", 2))
-# MBs.append(MessageBox("Test message for 3.5 seconds", 3.5, backcolor=(180,180,215)))
+common = window_module.common
+logic = window_module.logic
+prelogic = logic.prelogic
+messages = logic.messages
+pygame = window_module.pygame
+
 try:
     1/0
 except Exception as e:
@@ -34,6 +39,6 @@ while common.RUN:
     
     
     logic.game_update()
-    window_update()
+    window_module.window_update()
     
     pygame.display.update()

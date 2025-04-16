@@ -1,9 +1,12 @@
 # from logic import *
-import prelogic
 import logic
-import pygame
 
-common = prelogic.common
+prelogic = logic.prelogic
+common = logic.common
+pygame = common.pygame
+# import prelogic
+# import pygame
+# import common
 
 def get_trans(Surf, width, height, angle):
     return pygame.transform.rotate(pygame.transform.scale(Surf, (int(round(width)), int(round(height)))), int(round(angle)))
@@ -27,14 +30,15 @@ def all_window_postupdate():
         mb_y += box.size_y+1
 
 def main_menu_window_update():
-    for i in range(0, logic.open_hosts_onepage):
-        idx = logic.open_hosts_page*logic.open_hosts_onepage + i
-        if (idx >= len(logic.open_hosts_buttons)): break
+    for i in range(0, prelogic.open_hosts_onepage):
+        idx = prelogic.open_hosts_page*prelogic.open_hosts_onepage + i
+        if (idx >= len(prelogic.open_hosts_buttons)): break
         
-        button: logic.common.ButtonInteractive = logic.open_hosts_buttons[idx]
+        button: logic.common.ButtonInteractive = prelogic.open_hosts_buttons[idx]
         button.draw(common.window)
     
-    logic.open_hosts_page_label.draw(common.window)
+    if (prelogic.open_hosts_page_label): 
+        prelogic.open_hosts_page_label.draw(common.window)
 
 def preparing_menu_window_update():
     pass

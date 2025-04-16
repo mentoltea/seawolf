@@ -11,7 +11,9 @@
 # 3 - killed cell
 
 
-import common
+# import common
+import connection
+common = connection.common
 
 ALPLABET = 'abcdefghij'
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]

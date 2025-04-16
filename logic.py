@@ -1,25 +1,42 @@
-from prelogic import *
+import typing
+import json
+import time
+
 import messages
 
+prelogic = messages.prelogic
+common = prelogic.common
+connection = prelogic.connection
+eventhandler = prelogic.eventhandler
+game = prelogic.game
+task = prelogic.task
+
+# import prelogic
+# import common
+# import connection
+# import eventhandler
+# import game
+# import tasks.task as task
+
 def host_is_choosen(username, addr):
-    pass
+    print(username, addr)
+    # pass
 
 def open_hosts_clear():
-    open_hosts.clear()
-    open_hosts_buttons.clear()
+    prelogic.open_hosts.clear()
+    prelogic.open_hosts_buttons.clear()
     # print("cleared")
 
 def open_hosts_update_func():
-    global open_hosts_update_task
     open_hosts_clear()
-    while (game.gamestate == common.GameState.MAIN_MENU and UDP!=None):
-        rcv = UDP.recv(2)
+    while (prelogic.game.gamestate == prelogic.common.GameState.MAIN_MENU and prelogic.UDP!=None):
+        rcv = prelogic.UDP.recv(2)
         if (rcv):
             (data, addr) = rcv
-            if (addr[0] in open_hosts or addr[0] in MYADRRESS):
+            if (addr[0] in prelogic.open_hosts or addr[0] in prelogic.MYADRRESS):
                 continue
             
-            jsondata: map[str, typing.Any] = common.json.loads(data)
+            jsondata: map[str, typing.Any] = json.loads(data)
             if (not messages.check_udp_message_validation(jsondata, addr)):
                 continue
                 
@@ -39,10 +56,10 @@ def open_hosts_update_func():
                         )
                     new_btn.size_x = 350
                     new_btn.size_y = 30
-                    open_hosts_buttons.append(new_btn)
-                    open_hosts_buttons.sort(key=lambda b: b.add[0])
+                    prelogic.open_hosts_buttons.append(new_btn)
+                    prelogic.open_hosts_buttons.sort(key=lambda b: b.add[0])
                     
-                    open_hosts.append(addr[0])
+                    prelogic.open_hosts.append(addr[0])
                     
                     common.LOG(addr[0] + ": " + common.json.dumps(add))
                 
@@ -50,31 +67,29 @@ def open_hosts_update_func():
                     eventhandler.EventHandler.connection_requested(username=username,
                                                                    addr=addr)
             
-    open_hosts_update_task = None
+    prelogic.open_hosts_update_task = None
 
 def validate_page():
-    global open_hosts_page, open_hosts_onepage
-    if (open_hosts_page<0):
-        open_hosts_page=0
+    if (prelogic.open_hosts_page<0):
+        prelogic.open_hosts_page=0
         common.INFO("Negative pages are out of range")
         return
     
     maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
     
-    if (open_hosts_page > maxpage):
-        open_hosts_page=maxpage
+    if (prelogic.open_hosts_page > maxpage):
+        prelogic.open_hosts_page=maxpage
         common.INFO("Page is out of range")
         return
     
 
 def open_host_maxpage() -> int:
-    N = len(open_hosts_buttons)
+    N = len(prelogic.open_hosts_buttons)
     if (N==0): return 0
-    return (N-1)//open_hosts_onepage
+    return (N-1)//prelogic.open_hosts_onepage
 
 def open_hosts_page_add(num: int):
-    global open_hosts_page
-    open_hosts_page += num
+    prelogic.open_hosts_page += num
     validate_page()
 
 
@@ -85,7 +100,7 @@ def all_update():
     
     mb_y = 0
     for box in common.MBs:
-        if ((common.time.time() - box.created >=  box.timeout) 
+        if ((time.time() - box.created >=  box.timeout) 
             or (common.mouse_clicked and common.mouse_button == 1 and common.inrange(common.mouse_pos[0], 0, box.size_x) and common.inrange(common.mouse_pos[1], mb_y, mb_y + box.size_y))):
             common.MBs.remove(box)
         mb_y += box.size_y+1
@@ -103,14 +118,13 @@ def all_update():
             common.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
             
         # print(common.active_dialog.timeout)
-        if (common.time.time() - common.active_dialog.created_at >= common.active_dialog.timeout):
+        if (time.time() - common.active_dialog.created_at >= common.active_dialog.timeout):
             common.active_dialog = None
             
         
     
 
 def main_menu_update():
-    global UDP, open_hosts_update_task, open_hosts_page_label
     
     if (game.last_gamestate != game.gamestate):
         common.dialogs.append(
@@ -189,30 +203,30 @@ def main_menu_update():
         )
         common.active_buttons.append(ohppb)
         
-        open_hosts_page_label = common.Label(
+        prelogic.open_hosts_page_label = common.Label(
             text="0/0",
             position=(0,0),
             center=True
         )
-        open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
-        open_hosts_page_label.size_y = ohppb.size_y
+        prelogic.open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
+        prelogic.open_hosts_page_label.size_y = ohppb.size_y
         
-        open_hosts_page_label.position = (
+        prelogic.open_hosts_page_label.position = (
             ohppb.position[0] + ohppb.size_x + 5,
             ohppb.position[1],    
         )
         
     
-    if UDP==None:
-        UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
+    if prelogic.UDP==None:
+        prelogic.UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
         common.LOG("UDP socket opened")
-    if (not open_hosts_update_task):
-        open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
-        open_hosts_update_task()
+    if (not prelogic.open_hosts_update_task):
+        prelogic.open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
+        prelogic.open_hosts_update_task()
         common.LOG("open hosts update thread launched")
         
-    if (not UDP.runningflag):
-        UDP.start_sending(
+    if (not prelogic.UDP.runningflag):
+        prelogic.UDP.start_sending(
             messages.broadcast_message(),
             timestep=2
         )
@@ -225,13 +239,14 @@ def main_menu_update():
     validate_page()
     # print(len(open_hosts_buttons))
     maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
-    open_hosts_page_label.set_text(f"{open_hosts_page+1}/{maxpage+1}")
+    if (prelogic.open_hosts_page_label):
+        prelogic.open_hosts_page_label.set_text(f"{prelogic.open_hosts_page+1}/{maxpage+1}")
     
-    for i in range(0, open_hosts_onepage):
-        idx = open_hosts_page*open_hosts_onepage + i
-        if (idx >= len(open_hosts_buttons)): break
+    for i in range(0, prelogic.open_hosts_onepage):
+        idx = prelogic.open_hosts_page*prelogic.open_hosts_onepage + i
+        if (idx >= len(prelogic.open_hosts_buttons)): break
         
-        button = open_hosts_buttons[idx]
+        button = prelogic.open_hosts_buttons[idx]
         button.position = (common.WIN_X - padx - button.size_x,
                            common.WIN_Y - pady - button.size_y - cury)
         cury += button.size_y + pady
