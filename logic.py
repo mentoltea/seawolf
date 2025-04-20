@@ -2,14 +2,14 @@ import typing
 import json
 import time
 
-import messages
-
-prelogic = messages.prelogic
-common = prelogic.common
-connection = prelogic.connection
-eventhandler = prelogic.eventhandler
-game = prelogic.game
-task = prelogic.task
+import eventhandler
+from eventhandler import messages
+from messages import prelogic
+from prelogic import ui
+from prelogic import game
+from prelogic import common
+from prelogic import connection 
+from prelogic import task
 
 # import prelogic
 # import common
@@ -45,10 +45,14 @@ def open_hosts_update_func():
                 
             match(jsondata["type"]): # type: ignore
                 case common.MessageType.BROADCAST:  
-                    new_btn = common.ButtonInteractive(
+                    new_btn = ui.ButtonInteractive(
                             text= f"{username} : {addr[0]}",
                             position= (0,0),
-                            callback= None,
+                            callback= task.BasicTask(
+                                host_is_choosen,
+                                username,
+                                addr
+                            ),
                             oneclick=False,
                             add=(username, addr),
                             
@@ -61,7 +65,7 @@ def open_hosts_update_func():
                     
                     prelogic.open_hosts.append(addr[0])
                     
-                    common.LOG(addr[0] + ": " + common.json.dumps(add))
+                    prelogic.LOG(addr[0] + ": " + common.json.dumps(add))
                 
                 case common.MessageType.REQUEST_CONN:
                     eventhandler.EventHandler.connection_requested(username=username,
@@ -72,14 +76,14 @@ def open_hosts_update_func():
 def validate_page():
     if (prelogic.open_hosts_page<0):
         prelogic.open_hosts_page=0
-        common.INFO("Negative pages are out of range")
+        prelogic.INFO("Negative pages are out of range")
         return
     
     maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
     
     if (prelogic.open_hosts_page > maxpage):
         prelogic.open_hosts_page=maxpage
-        common.INFO("Page is out of range")
+        prelogic.INFO("Page is out of range")
         return
     
 
@@ -95,31 +99,31 @@ def open_hosts_page_add(num: int):
 
 def all_update():
     # print(common.active_dialog)
-    if (common.active_dialog == None and len(common.dialogs)>0):
-        common.active_dialog = common.dialogs.pop(0)
+    if (ui.active_dialog == None and len(ui.dialogs)>0):
+        ui.active_dialog = ui.dialogs.pop(0)
     
     mb_y = 0
-    for box in common.MBs:
+    for box in ui.MBs:
         if ((time.time() - box.created >=  box.timeout) 
             or (common.mouse_clicked and common.mouse_button == 1 and common.inrange(common.mouse_pos[0], 0, box.size_x) and common.inrange(common.mouse_pos[1], mb_y, mb_y + box.size_y))):
-            common.MBs.remove(box)
+            ui.MBs.remove(box)
         mb_y += box.size_y+1
     
-    for button in common.active_buttons:
+    for button in ui.active_buttons:
         if (common.mouse_clicked 
             and common.mouse_button == 1
             and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
     
-    if (common.active_dialog):
+    if (ui.active_dialog):
         if (common.mouse_clicked 
             and common.mouse_button == 1):
-            common.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
+            ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
             
         # print(common.active_dialog.timeout)
-        if (time.time() - common.active_dialog.created_at >= common.active_dialog.timeout):
-            common.active_dialog = None
+        if (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
+            ui.active_dialog = None
             
         
     
@@ -127,10 +131,10 @@ def all_update():
 def main_menu_update():
     
     if (game.last_gamestate != game.gamestate):
-        common.dialogs.append(
-            common.Dialog(
+        ui.dialogs.append(
+            ui.Dialog(
                 text= "It is main menu!",
-                button_left= common.ButtonInteractive(
+                button_left= ui.ButtonInteractive(
                     text= "Close",
                     position=(0,0),
                     callback= None
@@ -145,7 +149,7 @@ def main_menu_update():
         )
         
         
-        quit_button = common.ButtonInteractive(
+        quit_button = ui.ButtonInteractive(
             text = "Quit",
             position=(0,0),
             callback = task.JoinedTask(
@@ -159,9 +163,9 @@ def main_menu_update():
         quit_button_x = 10
         quit_button_y = common.WIN_Y - quit_button.size_y - 10
         quit_button.position = (quit_button_x, quit_button_y)
-        common.active_buttons.append(quit_button)
+        ui.active_buttons.append(quit_button)
         
-        clear_hosts_button = common.ButtonInteractive(
+        clear_hosts_button = ui.ButtonInteractive(
             text = "Clear / Update",
             position=(0,0),
             callback = open_hosts_clear,
@@ -170,11 +174,11 @@ def main_menu_update():
         
         clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
                                        common.WIN_Y - 10 - clear_hosts_button.size_y)
-        common.active_buttons.append(clear_hosts_button)
+        ui.active_buttons.append(clear_hosts_button)
         
         
         # ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
-        ohpnb = common.ButtonInteractive(
+        ohpnb = ui.ButtonInteractive(
             text = " > ",
             position=(0,0),
             callback = task.BasicTask(
@@ -187,10 +191,10 @@ def main_menu_update():
             clear_hosts_button.position[0] + clear_hosts_button.size_x - ohpnb.size_x,
             clear_hosts_button.position[1] - ohpnb.size_y - 10,
         )
-        common.active_buttons.append(ohpnb)
+        ui.active_buttons.append(ohpnb)
 
         # ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
-        ohppb = common.ButtonInteractive(
+        ohppb = ui.ButtonInteractive(
             text = " < ",
             position=(0,0),
             callback = task.BasicTask(
@@ -203,9 +207,9 @@ def main_menu_update():
             clear_hosts_button.position[0],
             clear_hosts_button.position[1] - ohpnb.size_y - 10,
         )
-        common.active_buttons.append(ohppb)
+        ui.active_buttons.append(ohppb)
         
-        prelogic.open_hosts_page_label = common.Label(
+        prelogic.open_hosts_page_label = ui.Label(
             text="0/0",
             position=(0,0),
             center=True
@@ -221,18 +225,18 @@ def main_menu_update():
     
     if prelogic.UDP==None:
         prelogic.UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
-        common.LOG("UDP socket opened")
+        prelogic.LOG("UDP socket opened")
     if (not prelogic.open_hosts_update_task):
         prelogic.open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
         prelogic.open_hosts_update_task()
-        common.LOG("open hosts update thread launched")
+        prelogic.LOG("open hosts update thread launched")
         
     if (not prelogic.UDP.runningflag):
         prelogic.UDP.start_sending(
             messages.broadcast_message(),
             timestep=2
         )
-        common.LOG("Broadcast started")
+        prelogic.LOG("Broadcast started")
     
     padx = 50
     pady = 10
@@ -258,7 +262,6 @@ def main_menu_update():
             and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
-            host_is_choosen(*button.add)
             
                 
 
@@ -270,7 +273,7 @@ def game_menu_update():
 
 def game_update():
     if (game.last_gamestate != game.gamestate):
-        common.active_buttons.clear()
+        ui.active_buttons.clear()
     
     all_update()
     match game.gamestate:

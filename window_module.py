@@ -1,9 +1,9 @@
 # from logic import *
 import logic
-
-prelogic = logic.prelogic
-common = logic.common
-pygame = common.pygame
+from logic import prelogic
+from prelogic import ui
+from prelogic import common
+from common import pygame
 # import prelogic
 # import pygame
 # import common
@@ -13,19 +13,19 @@ def get_trans(Surf : pygame.Surface, width: float, height: float, angle: float):
     #return pygame.transform.scale(pygame.transform.rotate(Surf, int(round(angle))), (int(round(width)),int(round(height))))
 
 def all_window_update():
-    for button in common.active_buttons:
+    for button in ui.active_buttons:
         button.draw(common.window)
     
-    for label in common.active_labels:
+    for label in ui.active_labels:
         label.draw(common.window)
     
     
-    if (common.active_dialog!=None):
-        common.active_dialog.draw(common.window)
+    if (ui.active_dialog!=None):
+        ui.active_dialog.draw(common.window)
         
 def all_window_postupdate():
     mb_y: float = 0
-    for box in common.MBs:
+    for box in ui.MBs:
         box.draw(common.window, 0, mb_y)
         mb_y += box.size_y+1
 
@@ -34,7 +34,7 @@ def main_menu_window_update():
         idx = prelogic.open_hosts_page*prelogic.open_hosts_onepage + i
         if (idx >= len(prelogic.open_hosts_buttons)): break
         
-        button: logic.common.ButtonInteractive = prelogic.open_hosts_buttons[idx]
+        button: ui.ButtonInteractive = prelogic.open_hosts_buttons[idx]
         button.draw(common.window)
     
     if (prelogic.open_hosts_page_label): 

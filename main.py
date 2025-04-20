@@ -1,23 +1,17 @@
 import window_module
-# import common
-# import prelogic
-# import logic
-# import messages
-
-common = window_module.common
-logic = window_module.logic
-prelogic = logic.prelogic
-messages = logic.messages
-pygame = window_module.pygame
+from window_module import logic
+from logic import prelogic
+from logic import common
+from common import pygame
 
 try:
     1/0 # type: ignore
 except Exception as e:
-    common.ERROR(str(e))
+    prelogic.ERROR(str(e))
 
 
 
-common.LOGS_ENABLED = True
+prelogic.LOGS_ENABLED = True
 
 while common.RUN:
     common.clock.tick(common.FPS)

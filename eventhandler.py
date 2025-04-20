@@ -1,10 +1,12 @@
 # from common import *
-import common
+# import prelogic
+import messages # type: ignore
+from messages import prelogic
 
 class EventHandler:
     @staticmethod
     def connection_requested(username: str, addr: tuple[str,str]):
-        common.LOG("Connection requested" + " : " + addr[0])
+        prelogic.LOG("Connection requested" + " : " + addr[0])
     
     @staticmethod
     def connection_accepted():

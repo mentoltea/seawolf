@@ -1,7 +1,7 @@
 import prelogic
 import typing
-
-common = prelogic.common
+from prelogic import common
+# common = prelogic.common
 
 def check_udp_message_validation(jsondata: dict[str, typing.Any], addr: tuple[str,str]) -> bool:
     if ("type" in jsondata 
@@ -9,22 +9,22 @@ def check_udp_message_validation(jsondata: dict[str, typing.Any], addr: tuple[st
         try:
             add = jsondata["add"]
             if add["game"] != common.version.GAME:
-                common.LOG(addr[0] + ": " + f"Different games - {common.version.GAME} and {add["game"]}")
+                prelogic.LOG(addr[0] + ": " + f"Different games - {common.version.GAME} and {add["game"]}")
                 return False
             
             if add["version"] != common.version.VERSION:
-                common.LOG(addr[0] + ": " + f"Different versions - {common.version.VERSION} and {add["version"]}")
+                prelogic.LOG(addr[0] + ": " + f"Different versions - {common.version.VERSION} and {add["version"]}")
                 return False
             username = add["name"]
             username = username[0:16]
             if not isinstance(username, str):
-                common.LOG(addr[0] + ": " + f"Invalid name")
+                prelogic.LOG(addr[0] + ": " + f"Invalid name")
                 return False
             
             return True
         except Exception:
             # print(e)
-            common.LOG(addr[0] + ": " + "Invalid json file structure")
+            prelogic.LOG(addr[0] + ": " + "Invalid json file structure")
             # print(jsondata)
     return False
 

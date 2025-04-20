@@ -1,9 +1,8 @@
 # from common import *
 # from eventhandler import *
 # import common
-import eventhandler
-
-common = eventhandler.common
+# import eventhandler
+import common
 socket = common.socket
 time = common.time
 task = common.task

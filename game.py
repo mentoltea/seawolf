@@ -12,8 +12,11 @@
 
 
 # import common
-import connection
-common = connection.common
+# import connection
+import ui # type: ignore
+from ui import connection # type: ignore
+from connection import common
+# common = connection.common
 
 ALPLABET = 'abcdefghij'
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
