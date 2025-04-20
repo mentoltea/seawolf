@@ -19,15 +19,14 @@ def all_window_update():
     for label in ui.active_labels:
         label.draw(common.window)
     
-    
-    if (ui.active_dialog!=None):
-        ui.active_dialog.draw(common.window)
         
 def all_window_postupdate():
     mb_y: float = 0
     for box in ui.MBs:
         box.draw(common.window, 0, mb_y)
         mb_y += box.size_y+1
+    if (ui.active_dialog!=None):
+        ui.active_dialog.draw(common.window)
 
 def main_menu_window_update():
     for i in range(0, prelogic.open_hosts_onepage):

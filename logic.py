@@ -20,21 +20,22 @@ from prelogic import task
 
 def host_is_choosen(username: str, addr: tuple[str,str]):
     print(username, addr)
+    game.gamestate = common.GameState.PREPARING_MENU
     # pass
 
 def open_hosts_clear():
     prelogic.open_hosts.clear()
     prelogic.open_hosts_buttons.clear()
-    # print("cleared")
 
 def open_hosts_update_func():
     open_hosts_clear()
     while (prelogic.game.gamestate == prelogic.common.GameState.MAIN_MENU and prelogic.UDP!=None):
         rcv = prelogic.UDP.recv(2)
+        # if (prelogic.game.gamestate != prelogic.common.GameState.MAIN_MENU): break
         if (rcv):
             (data, addr) = rcv
-            if (addr[0] in prelogic.open_hosts or addr[0] in prelogic.MYADRRESS):
-                continue
+            # if (addr[0] in prelogic.open_hosts or addr[0] in prelogic.MYADRRESS):
+            #     continue
             
             jsondata: dict[str, typing.Any] = json.loads(data)
             if (not messages.check_udp_message_validation(jsondata, addr)):
@@ -65,13 +66,13 @@ def open_hosts_update_func():
                     
                     prelogic.open_hosts.append(addr[0])
                     
-                    prelogic.LOG(addr[0] + ": " + common.json.dumps(add))
+                    # prelogic.LOG(addr[0] + ": " + common.json.dumps(add))
                 
                 case common.MessageType.REQUEST_CONN:
                     eventhandler.EventHandler.connection_requested(username=username,
                                                                    addr=addr)
             
-    prelogic.open_hosts_update_task = None
+    # prelogic.open_hosts_update_task = None
 
 def validate_page():
     if (prelogic.open_hosts_page<0):
@@ -98,7 +99,6 @@ def open_hosts_page_add(num: int):
 
 
 def all_update():
-    # print(common.active_dialog)
     if (ui.active_dialog == None and len(ui.dialogs)>0):
         ui.active_dialog = ui.dialogs.pop(0)
         
@@ -108,7 +108,6 @@ def all_update():
             ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
             common.mouse_clicked = False
             
-        # print(common.active_dialog.timeout)
         if (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
             ui.active_dialog = None
     
@@ -128,22 +127,23 @@ def all_update():
             
         
 def main_menu_init():
-    ui.dialogs.append(
-        ui.Dialog(
-            text= "It is main menu!",
-            button_left= ui.ButtonInteractive(
-                text= "Close",
-                position=(0,0),
-                callback= None
-            ),
-            # button_right= common.ButtonInteractive(
-            #     text= "Not close",
-            #     position=(0,0),
-            #     callback= None
-            # ),
-            timeout=5
-        )
-    )
+    common.change_window_size((1280, 720))
+    # ui.dialogs.append(
+    #     ui.Dialog(
+    #         text= "It is main menu!",
+    #         button_left= ui.ButtonInteractive(
+    #             text= "Close",
+    #             position=(0,0),
+    #             callback= None
+    #         ),
+    #         # button_right= common.ButtonInteractive(
+    #         #     text= "Not close",
+    #         #     position=(0,0),
+    #         #     callback= None
+    #         # ),
+    #         timeout=5
+    #     )
+    # )
     
     
     quit_button = ui.ButtonInteractive(
@@ -152,7 +152,6 @@ def main_menu_init():
         callback = task.JoinedTask(
             [
                 task.BasicTask(eventhandler.EventHandler.quit),
-                # task.BasicTask(print, "Quit"),
                 task.BasicTask(common.STOP),
             ]
         )
@@ -225,7 +224,7 @@ def main_menu_init():
     if (not prelogic.open_hosts_update_task):
         prelogic.open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
         prelogic.open_hosts_update_task()
-        prelogic.LOG("open hosts update thread launched")
+        # prelogic.LOG("open hosts update thread launched")
 
 def main_menu_update():
     if (prelogic.UDP != None):
@@ -235,13 +234,11 @@ def main_menu_update():
                 timestep=2
             )
             prelogic.LOG("Broadcast started")
-    
     padx = 50
     pady = 10
     cury = 0
     
     validate_page()
-    # print(len(open_hosts_buttons))
     maxpage = open_host_maxpage() #len(open_hosts_buttons) // (open_hosts_onepage + 1)
     if (prelogic.open_hosts_page_label):
         prelogic.open_hosts_page_label.set_text(f"{prelogic.open_hosts_page+1}/{maxpage+1}")
@@ -262,10 +259,36 @@ def main_menu_update():
             button.avtivate()
             
 def main_menu_deinit():
-    pass              
+    prelogic.open_hosts_page_label = None
+    if prelogic.UDP!=None:
+        prelogic.UDP.stop()
+        # prelogic.UDP = None
+    if (prelogic.open_hosts_update_task != None):
+        prelogic.open_hosts_update_task = None
+    
 
 def preparing_menu_init():
-    pass
+    common.change_window_size((900,400))
+    def lcl():
+        game.gamestate = common.GameState.MAIN_MENU
+    ui.dialogs.append(
+        ui.Dialog(
+            text= "It is prepare menu!",
+            button_left= ui.ButtonInteractive(
+                text= "Return back",
+                position=(0,0),
+                callback= task.BasicTask(
+                    lcl
+                )
+            ),
+            # button_right= common.ButtonInteractive(
+            #     text= "Not close",
+            #     position=(0,0),
+            #     callback= None
+            # ),
+            # timeout=5
+        )
+    )
 def preparing_menu_update():
     pass
 def preparing_menu_deinit():
@@ -279,9 +302,11 @@ def game_menu_deinit():
     pass
 
 def game_update():
+    all_update()
     if (game.last_gamestate != game.gamestate):
         ui.active_buttons.clear()
         ui.active_labels.clear()
+        if (game.last_gamestate!=None): prelogic.LOG(game.last_gamestate + " DEINIT")
         match game.last_gamestate:
             case common.GameState.MAIN_MENU:
                 main_menu_deinit()
@@ -291,6 +316,7 @@ def game_update():
                 game_menu_deinit()
             case _:
                 pass
+        prelogic.LOG(game.gamestate + " INIT")
         match game.gamestate:
             case common.GameState.MAIN_MENU:
                 main_menu_init()
@@ -299,8 +325,8 @@ def game_update():
             case common.GameState.GAME_MENU:
                 game_menu_init()
             case _:
-                pass    
-    all_update()
+                pass
+        game.last_gamestate = game.gamestate
     match game.gamestate:
         case common.GameState.MAIN_MENU:
             main_menu_update()
@@ -313,6 +339,4 @@ def game_update():
         
         case _:
             pass
-        
-    game.last_gamestate = game.gamestate
         
