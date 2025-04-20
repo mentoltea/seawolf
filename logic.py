@@ -101,6 +101,16 @@ def all_update():
     # print(common.active_dialog)
     if (ui.active_dialog == None and len(ui.dialogs)>0):
         ui.active_dialog = ui.dialogs.pop(0)
+        
+    if (ui.active_dialog):
+        if (common.mouse_clicked 
+            and common.mouse_button == 1):
+            ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
+            common.mouse_clicked = False
+            
+        # print(common.active_dialog.timeout)
+        if (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
+            ui.active_dialog = None
     
     mb_y = 0
     for box in ui.MBs:
@@ -115,23 +125,13 @@ def all_update():
             and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
-    
-    if (ui.active_dialog):
-        if (common.mouse_clicked 
-            and common.mouse_button == 1):
-            ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
-            
-        # print(common.active_dialog.timeout)
-        if (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
-            ui.active_dialog = None
             
         
     
 
 def main_menu_update():
     
-    if (game.last_gamestate != game.gamestate):
-        common.change_window_size((500,500))        
+    if (game.last_gamestate != game.gamestate):   
         ui.dialogs.append(
             ui.Dialog(
                 text= "It is main menu!",

@@ -211,11 +211,10 @@ class Dialog:
         pygame.draw.rect(surf, color_inverse(self.label.backcolor), pygame.Rect(x, y + self.size_y*0.95, self.size_x*timefull, self.size_y*0.05), border_radius=1)
 
     def click_check(self, x: float, y: float):
-        # print("click")
         if ((self.button_left and self.button_left.click_check(x, y)) 
             or (self.button_right and self.button_right.click_check(x, y))):
             self.timeout = 0
-            # print("clicked")
+
 
 active_dialog: Dialog | None = None
 dialogs: list[Dialog] = []
