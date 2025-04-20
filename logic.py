@@ -127,103 +127,98 @@ def all_update():
             button.avtivate()
             
         
-    
-
-def main_menu_update():
-    
-    if (game.last_gamestate != game.gamestate):   
-        ui.dialogs.append(
-            ui.Dialog(
-                text= "It is main menu!",
-                button_left= ui.ButtonInteractive(
-                    text= "Close",
-                    position=(0,0),
-                    callback= None
-                ),
-                # button_right= common.ButtonInteractive(
-                #     text= "Not close",
-                #     position=(0,0),
-                #     callback= None
-                # ),
-                timeout=5
-            )
-        )
-        
-        
-        quit_button = ui.ButtonInteractive(
-            text = "Quit",
-            position=(0,0),
-            callback = task.JoinedTask(
-                [
-                    task.BasicTask(eventhandler.EventHandler.quit),
-                    # task.BasicTask(print, "Quit"),
-                    task.BasicTask(common.STOP),
-                ]
-            )
-        )
-        quit_button_x = 10
-        quit_button_y = common.WIN_Y - quit_button.size_y - 10
-        quit_button.position = (quit_button_x, quit_button_y)
-        ui.active_buttons.append(quit_button)
-        
-        clear_hosts_button = ui.ButtonInteractive(
-            text = "Clear / Update",
-            position=(0,0),
-            callback = open_hosts_clear,
-            center=True
-        )
-        
-        clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
-                                       common.WIN_Y - 10 - clear_hosts_button.size_y)
-        ui.active_buttons.append(clear_hosts_button)
-        
-        
-        # ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
-        ohpnb = ui.ButtonInteractive(
-            text = " > ",
-            position=(0,0),
-            callback = task.BasicTask(
-                open_hosts_page_add,
-                1
+def main_menu_init():
+    ui.dialogs.append(
+        ui.Dialog(
+            text= "It is main menu!",
+            button_left= ui.ButtonInteractive(
+                text= "Close",
+                position=(0,0),
+                callback= None
             ),
-            center=True
+            # button_right= common.ButtonInteractive(
+            #     text= "Not close",
+            #     position=(0,0),
+            #     callback= None
+            # ),
+            timeout=5
         )
-        ohpnb.position = (
-            clear_hosts_button.position[0] + clear_hosts_button.size_x - ohpnb.size_x,
-            clear_hosts_button.position[1] - ohpnb.size_y - 10,
-        )
-        ui.active_buttons.append(ohpnb)
-
-        # ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
-        ohppb = ui.ButtonInteractive(
-            text = " < ",
-            position=(0,0),
-            callback = task.BasicTask(
-                open_hosts_page_add,
-                -1
-            ),
-            center=True
-        )
-        ohppb.position = (
-            clear_hosts_button.position[0],
-            clear_hosts_button.position[1] - ohpnb.size_y - 10,
-        )
-        ui.active_buttons.append(ohppb)
-        
-        prelogic.open_hosts_page_label = ui.Label(
-            text="0/0",
-            position=(0,0),
-            center=True
-        )
-        prelogic.open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
-        prelogic.open_hosts_page_label.size_y = ohppb.size_y
-        
-        prelogic.open_hosts_page_label.position = (
-            ohppb.position[0] + ohppb.size_x + 5,
-            ohppb.position[1],    
-        )
-        
+    )
     
+    
+    quit_button = ui.ButtonInteractive(
+        text = "Quit",
+        position=(0,0),
+        callback = task.JoinedTask(
+            [
+                task.BasicTask(eventhandler.EventHandler.quit),
+                # task.BasicTask(print, "Quit"),
+                task.BasicTask(common.STOP),
+            ]
+        )
+    )
+    quit_button_x = 10
+    quit_button_y = common.WIN_Y - quit_button.size_y - 10
+    quit_button.position = (quit_button_x, quit_button_y)
+    ui.active_buttons.append(quit_button)
+    
+    clear_hosts_button = ui.ButtonInteractive(
+        text = "Clear / Update",
+        position=(0,0),
+        callback = open_hosts_clear,
+        center=True
+    )
+    
+    clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
+                                    common.WIN_Y - 10 - clear_hosts_button.size_y)
+    ui.active_buttons.append(clear_hosts_button)
+    
+    
+    # ohpnb = open_hosts_page_next_button = common.ButtonInteractive(
+    ohpnb = ui.ButtonInteractive(
+        text = " > ",
+        position=(0,0),
+        callback = task.BasicTask(
+            open_hosts_page_add,
+            1
+        ),
+        center=True
+    )
+    ohpnb.position = (
+        clear_hosts_button.position[0] + clear_hosts_button.size_x - ohpnb.size_x,
+        clear_hosts_button.position[1] - ohpnb.size_y - 10,
+    )
+    ui.active_buttons.append(ohpnb)
+
+    # ohppb = open_hosts_page_prev_button = common.ButtonInteractive(
+    ohppb = ui.ButtonInteractive(
+        text = " < ",
+        position=(0,0),
+        callback = task.BasicTask(
+            open_hosts_page_add,
+            -1
+        ),
+        center=True
+    )
+    ohppb.position = (
+        clear_hosts_button.position[0],
+        clear_hosts_button.position[1] - ohpnb.size_y - 10,
+    )
+    ui.active_buttons.append(ohppb)
+    
+    prelogic.open_hosts_page_label = ui.Label(
+        text="0/0",
+        position=(0,0),
+        center=True
+    )
+    prelogic.open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
+    prelogic.open_hosts_page_label.size_y = ohppb.size_y
+    
+    prelogic.open_hosts_page_label.position = (
+        ohppb.position[0] + ohppb.size_x + 5,
+        ohppb.position[1],    
+    )
+
     if prelogic.UDP==None:
         prelogic.UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
         prelogic.LOG("UDP socket opened")
@@ -231,13 +226,15 @@ def main_menu_update():
         prelogic.open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
         prelogic.open_hosts_update_task()
         prelogic.LOG("open hosts update thread launched")
-        
-    if (not prelogic.UDP.runningflag):
-        prelogic.UDP.start_sending(
-            messages.broadcast_message(),
-            timestep=2
-        )
-        prelogic.LOG("Broadcast started")
+
+def main_menu_update():
+    if (prelogic.UDP != None):
+        if (not prelogic.UDP.runningflag):
+            prelogic.UDP.start_sending(
+                messages.broadcast_message(),
+                timestep=2
+            )
+            prelogic.LOG("Broadcast started")
     
     padx = 50
     pady = 10
@@ -264,18 +261,45 @@ def main_menu_update():
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
             
-                
+def main_menu_deinit():
+    pass              
 
+def preparing_menu_init():
+    pass
 def preparing_menu_update():
     pass
+def preparing_menu_deinit():
+    pass
 
+def game_menu_init():
+    pass
 def game_menu_update():
+    pass
+def game_menu_deinit():
     pass
 
 def game_update():
     if (game.last_gamestate != game.gamestate):
         ui.active_buttons.clear()
-    
+        ui.active_labels.clear()
+        match game.last_gamestate:
+            case common.GameState.MAIN_MENU:
+                main_menu_deinit()
+            case common.GameState.PREPARING_MENU:
+                preparing_menu_deinit()
+            case common.GameState.GAME_MENU:
+                game_menu_deinit()
+            case _:
+                pass
+        match game.gamestate:
+            case common.GameState.MAIN_MENU:
+                main_menu_init()
+            case common.GameState.PREPARING_MENU:
+                preparing_menu_init()
+            case common.GameState.GAME_MENU:
+                game_menu_init()
+            case _:
+                pass    
     all_update()
     match game.gamestate:
         case common.GameState.MAIN_MENU:
