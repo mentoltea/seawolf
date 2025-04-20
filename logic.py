@@ -131,6 +131,7 @@ def all_update():
 def main_menu_update():
     
     if (game.last_gamestate != game.gamestate):
+        common.change_window_size((500,500))        
         ui.dialogs.append(
             ui.Dialog(
                 text= "It is main menu!",

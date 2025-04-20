@@ -68,7 +68,6 @@ clock = pygame.time.Clock()
 
 
 window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
-background = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
 
 EVENTS: list[pygame.event.Event] = []
 
@@ -79,3 +78,14 @@ mouse_button: int | None = None
 def inrange(value: typing.Any, vmin: typing.Any, vmax: typing.Any) -> bool:
     if (value >= vmin and value <= vmax): return True
     return False
+
+def change_window_size(newsize: tuple[int,int]):
+    global WIN_X, WIN_Y, RES_CURRENT, RES_FORM, wn, window, shift_WINX, shift_WINY
+    (WIN_X, WIN_Y) = newsize # type: ignore
+    RES_FORM = newsize # type: ignore
+    RES_CURRENT = newsize # type: ignore
+    shift_WINX = newsize[0] - WIN_X
+    shift_WINY = newsize[1] - WIN_Y
+
+    wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
+    window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
