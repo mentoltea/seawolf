@@ -68,7 +68,7 @@ def rejected_connection(username: str, addr: tuple[str,str]):
         prelogic.TCP = None
     if (addr[0] in connection.EXPECTED_HOSTS):
         connection.EXPECTED_HOSTS.remove(addr[0])
-        prelogic.LOG(f"Rejection from {username}:{addr[0]}")
+    prelogic.LOG(f"Rejection from {username}:{addr[0]}")
 
 def reject_connection(username: str, addr: tuple[str,str]):
     if (prelogic.TCP):
