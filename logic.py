@@ -74,7 +74,7 @@ def reject_connection(username: str, addr: tuple[str,str]):
         prelogic.TCP = None
     if (prelogic.UDP):
         prelogic.UDP.send(messages.reject_connection_message(), addr[0], int(addr[1]))
-    connection.EXPECTED_HOSTS.remove(addr[0])
+    if (addr[0] in connection.EXPECTED_HOSTS): connection.EXPECTED_HOSTS.remove(addr[0])
     prelogic.LOG(f"Request from {username}:{addr[0]} rejected")
 
 def wait_for_reply_or_deny(ip: str, sleeptime: float=5):

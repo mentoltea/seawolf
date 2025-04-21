@@ -89,7 +89,8 @@ class TCP_Sock:
         self.stopflag = False
         self.is_server = is_server
         if is_server:
-            self.sock.bind((host, port))
+            print(host, port)
+            self.sock.bind((host, int(port)))
             self.sock.listen(5) # 5 attempts to connect to server
         else:
             self.sock.connect((host,port))
