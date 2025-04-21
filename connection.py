@@ -84,6 +84,7 @@ class TCP_Sock:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.conn = None
         self.connected = False
         self.stopflag = False
@@ -97,6 +98,8 @@ class TCP_Sock:
             
     def __del__(self):
         self.sock.close()
+        if (self.is_server):
+            self.sock.close()
 
     def stop(self):
         self.stopflag = True
