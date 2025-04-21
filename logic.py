@@ -236,30 +236,22 @@ def all_update():
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
             button.avtivate()
             
+            
         
 def main_menu_init():
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
     
-    common.change_window_size((1280, 720))
-    # ui.dialogs.append(
-    #     ui.Dialog(
-    #         text= "It is main menu!",
-    #         button_left= ui.ButtonInteractive(
-    #             text= "Close",
-    #             position=(0,0),
-    #             callback= None
-    #         ),
-    #         # button_right= common.ButtonInteractive(
-    #         #     text= "Not close",
-    #         #     position=(0,0),
-    #         #     callback= None
-    #         # ),
-    #         timeout=5
-    #     )
-    # )
+    common.change_window_size((720, 420))
     
+    my_name_label = ui.Label(
+        text=f"My name: {prelogic.MYUSERNAME}",
+        position=(0,0),
+        font=ui.Font22,
+        center=False,
+        backcolor=(220,220,250)
+    )
     
     quit_button = ui.ButtonInteractive(
         text = "Quit",
@@ -269,7 +261,8 @@ def main_menu_init():
                 task.BasicTask(eventhandler.EventHandler.quit),
                 task.BasicTask(common.STOP),
             ]
-        )
+        ),
+        font=ui.Font22
     )
     quit_button_x = 10
     quit_button_y = common.WIN_Y - quit_button.size_y - 10
@@ -280,11 +273,14 @@ def main_menu_init():
         text = "Clear / Update",
         position=(0,0),
         callback = open_hosts_clear,
-        center=True
+        center=True,
+        font=ui.Font22
     )
     
-    clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
-                                    common.WIN_Y - 10 - clear_hosts_button.size_y)
+    # clear_hosts_button.position = (common.WIN_X - 400 - 50 - clear_hosts_button.size_x,
+    #                                 common.WIN_Y - 10 - clear_hosts_button.size_y)
+    clear_hosts_button.position = (quit_button_x + my_name_label.size_x - clear_hosts_button.size_x,
+                                    quit_button_y + quit_button.size_y - clear_hosts_button.size_y)
     ui.active_buttons.append(clear_hosts_button)
     
     
@@ -323,7 +319,8 @@ def main_menu_init():
     prelogic.open_hosts_page_label = ui.Label(
         text="0/0",
         position=(0,0),
-        center=True
+        center=True,
+        font=ui.Font22
     )
     prelogic.open_hosts_page_label.size_x = clear_hosts_button.size_x - ohpnb.size_x - ohppb.size_x - 2*5
     prelogic.open_hosts_page_label.size_y = ohppb.size_y
@@ -332,6 +329,12 @@ def main_menu_init():
         ohppb.position[0] + ohppb.size_x + 5,
         ohppb.position[1],    
     )
+    
+    my_name_label.position = (
+        quit_button_x,
+        prelogic.open_hosts_page_label.position[1] - 20 - my_name_label.size_y
+    )
+    ui.active_labels.append(my_name_label)
 
     open_UDP_socket()
     if (not prelogic.open_hosts_update_task):
@@ -347,7 +350,7 @@ def main_menu_update():
                 timestep=2
             )
             prelogic.LOG("Broadcast started")
-    padx = 50
+    padx = 20
     pady = 10
     cury = 0
     

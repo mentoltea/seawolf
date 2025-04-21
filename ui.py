@@ -7,7 +7,14 @@ import time
 from common import pygame
 from common import task
 
-DefaultFont = pygame.font.Font(pygame.font.match_font('timesnewroman'), 18)
+
+Font16 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 16)
+Font18 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 18)
+Font20 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 20)
+Font22 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 22)
+Font24 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 24)
+DefaultFont = Font20
+
 def draw_text(text: str, x: float, y: float, surf: pygame.Surface = common.window, font: pygame.font.Font = DefaultFont, color:tuple[int,int,int]=(0,0,0)):
     surf.blit(font.render(text,True,color), (x,y))
 
@@ -26,8 +33,8 @@ class Label:
         self.fontcolor = fontcolor
         self.backcolor = backcolor
         (self.text_size_x, self.text_size_y) = self.font.size(self.text)
-        self.size_x: float = self.text_size_x*1.2
-        self.size_y: float = self.text_size_y*1.2
+        self.size_x: float = self.text_size_x + 10
+        self.size_y: float = self.text_size_y + 10
         if center:
             self.size_x = min(self.size_x, self.text_size_x+20)
             self.size_y = min(self.size_y, self.text_size_y+10)
@@ -36,8 +43,8 @@ class Label:
         
     def draw(self, surf:pygame.Surface, *args : typing.Any, **kwargs: typing.Any):
         pygame.draw.rect(surf, self.backcolor, pygame.Rect(self.position[0], self.position[1], self.size_x, self.size_y), border_radius=2)
-        text_x = self.position[0] + 0.1*self.size_x
-        text_y = self.position[1] + 0.1*self.size_y
+        text_x = self.position[0] + 5
+        text_y = self.position[1] + 5
         if self.center:
             text_x = self.position[0] + self.size_x/2 - self.text_size_x/2
             text_y = self.position[1] + self.size_y/2 - self.text_size_y/2
@@ -199,7 +206,7 @@ class Dialog:
         y = (common.WIN_Y - self.size_y)/2
         
         # surf.fill((200,200,200,0))
-        pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2, width=2)
+        pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2, width=0)
         
         
         self.label.draw(surf)

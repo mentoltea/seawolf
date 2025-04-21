@@ -12,6 +12,7 @@ import socket # type: ignore
 import time # type: ignore
 import json # type: ignore
 
+import pyautogui
 import pygame
 
 
@@ -53,16 +54,15 @@ class GameState:
     MAIN_MENU = 'MAIN_MENU'
     PREPARING_MENU = 'PREPARING_MENU'
     GAME_MENU = 'GAME_MENU'
-    
 pygame.init()
 pygame.mixer.init()
 
-
 RES_CURRENT = (WIN_X, WIN_Y)
-wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
-
-
+# os.environ['SDL_VIDEO_WINDOW_POS'] = "200,200"
+# wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
 pygame.display.set_caption("seawolf")
+
+
 
 clock = pygame.time.Clock()
 
@@ -86,6 +86,13 @@ def change_window_size(newsize: tuple[int,int]):
     RES_CURRENT = newsize # type: ignore
     shift_WINX = newsize[0] - WIN_X
     shift_WINY = newsize[1] - WIN_Y
+    
+    pygame.display.quit()
 
+    (desc_x, desc_y) = pyautogui.size()
+    os.environ['SDL_VIDEO_WINDOW_POS'] = f"{desc_x//2 - WIN_X//2},{desc_y//2 - WIN_Y//2}"
+    
     wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
     window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
+
+change_window_size(RES_CURRENT)
