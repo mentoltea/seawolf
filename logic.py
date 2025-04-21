@@ -52,7 +52,7 @@ def wait_connection(username: str, addr: tuple[str,str], sleeptime: float):
 
 def accept_connection(username: str, addr: tuple[str,str]):
     tcp_port = connection.TCP_PORT
-    prelogic.TCP = connection.TCP_Sock(addr[0], str(tcp_port), is_server=True)
+    prelogic.TCP = connection.TCP_Sock(connection.ALL_HOSTS, str(tcp_port), is_server=True)
     accept_task = task.ThreadTask(prelogic.TCP.accept)
     accept_task()
     connection.EXPECTED_HOSTS.append(addr[0])
