@@ -39,17 +39,25 @@ def successfull_connection(username: str, addr: tuple[str,str]):
 def connect_to(username: str, addr: tuple[str,str], port: str):
     try:
         prelogic.TCP = connection.TCP_Sock(addr[0], port, is_server=False)
+        prelogic.TCP.send("Success client")
         successfull_connection(username, addr)
     except Exception as e:
         prelogic.ERROR(str(e))
         reject_connection(username, addr)
 
-def wait_connection(username: str, addr: tuple[str,str], sleeptime: float):
-    time.sleep(sleeptime)
+def wait_connection(username: str, addr: tuple[str,str], sleeptime: float, timestep: float = 0.5):
+    elapsed: float = 0
+    while (elapsed < sleeptime):
+        time.sleep(timestep)
+        elapsed += timestep
+        if (not prelogic.TCP):
+            break
+        if (prelogic.TCP.connected):
+            print(str(prelogic.TCP.recv(0.5)))
+            successfull_connection(username, addr)
+        
     if (not prelogic.TCP or not prelogic.TCP.connected):
         reject_connection(username, addr)
-    else:
-        successfull_connection(username, addr)
 
 def accept_connection(username: str, addr: tuple[str,str]):
     tcp_port = connection.TCP_PORT
