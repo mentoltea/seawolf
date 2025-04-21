@@ -9,11 +9,11 @@ def check_udp_message_validation(jsondata: dict[str, typing.Any], addr: tuple[st
         try:
             add = jsondata["add"]
             if add["game"] != common.version.GAME:
-                prelogic.LOG(addr[0] + ": " + f"Different games - {common.version.GAME} and {add["game"]}")
+                prelogic.LOG(addr[0] + ": " + f'Different games - {common.version.GAME} and {add["game"]}')
                 return False
             
             if add["version"] != common.version.VERSION:
-                prelogic.LOG(addr[0] + ": " + f"Different versions - {common.version.VERSION} and {add["version"]}")
+                prelogic.LOG(addr[0] + ": " + f'Different versions - {common.version.VERSION} and {add["version"]}')
                 return False
             username = add["name"]
             username = username[0:16]
