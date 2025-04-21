@@ -18,10 +18,77 @@ from prelogic import task
 # import game
 # import tasks.task as task
 
+def open_UDP_socket():
+    if prelogic.UDP==None:
+        prelogic.UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
+        prelogic.LOG("UDP socket opened")
+
+def successfull_connection(username: str, addr: tuple[str,str]):
+    ui.dialogs.append(
+        ui.Dialog(
+            text="Succesfully connected!",
+            button_left=ui.ButtonInteractive(
+                text="Close connection",
+                position=(0,0),
+                callback=task.BasicTask(reject_connection, username, addr)
+            )
+        )
+    )
+
+def connect_to(username: str, addr: tuple[str,str], port: str):
+    try:
+        prelogic.TCP = connection.TCP_Sock(addr[0], port, is_server=False)
+        successfull_connection(username, addr)
+    except Exception as e:
+        prelogic.ERROR(str(e))
+        reject_connection(username, addr)
+
+def wait_connection(username: str, addr: tuple[str,str], sleeptime: float):
+    time.sleep(sleeptime)
+    if (not prelogic.TCP or not prelogic.TCP.connected):
+        reject_connection(username, addr)
+    else:
+        successfull_connection(username, addr)
+
+def accept_connection(username: str, addr: tuple[str,str]):
+    tcp_port = connection.TCP_PORT
+    prelogic.TCP = connection.TCP_Sock(addr[0], str(tcp_port), is_server=True)
+    accept_task = task.ThreadTask(prelogic.TCP.accept)
+    accept_task()
+    connection.EXPECTED_HOSTS.append(addr[0])
+    if (prelogic.UDP):
+        prelogic.UDP.send(messages.accept_connection_message(tcp_port), addr[0], int(addr[1]))
+    wait_task = task.ThreadTask(wait_connection, username, addr, 5)
+    wait_task()
+
+def rejected_connection(username: str, addr: tuple[str,str]):
+    if (prelogic.TCP):
+        prelogic.TCP.stop()
+        prelogic.TCP = None
+    connection.EXPECTED_HOSTS.remove(addr[0])
+    prelogic.LOG(f"Rejection from {username}:{addr[0]}")
+
+def reject_connection(username: str, addr: tuple[str,str]):
+    if (prelogic.TCP):
+        prelogic.TCP.stop()
+        prelogic.TCP = None
+    if (prelogic.UDP):
+        prelogic.UDP.send(messages.reject_connection_message(), addr[0], int(addr[1]))
+    connection.EXPECTED_HOSTS.remove(addr[0])
+    prelogic.LOG(f"Request from {username}:{addr[0]} rejected")
+
+def wait_for_reply_or_deny(ip: str, sleeptime: float=5):
+    time.sleep(sleeptime)
+    if (prelogic.TCP == None or prelogic.TCP.host != ip):
+        connection.EXPECTED_HOSTS.remove(ip)
+
 def host_is_choosen(username: str, addr: tuple[str,str]):
+    if (addr[0] in connection.EXPECTED_HOSTS):
+        return
     print(username, addr)
-    game.gamestate = common.GameState.PREPARING_MENU
-    # pass
+    if (prelogic.UDP):
+        prelogic.UDP.send(messages.request_connection_message(), addr[0], int(addr[1]))
+    prelogic.LOG(f"Request sent to {addr[0]}")
 
 def open_hosts_clear():
     prelogic.open_hosts.clear()
@@ -34,8 +101,8 @@ def open_hosts_update_func():
         # if (prelogic.game.gamestate != prelogic.common.GameState.MAIN_MENU): break
         if (rcv):
             (data, addr) = rcv
-            # if (addr[0] in prelogic.open_hosts or addr[0] in prelogic.MYADRRESS):
-            #     continue
+            if (addr[0] in prelogic.MYADRRESS):
+                continue
             
             jsondata: dict[str, typing.Any] = json.loads(data)
             if (not messages.check_udp_message_validation(jsondata, addr)):
@@ -46,6 +113,8 @@ def open_hosts_update_func():
                 
             match(jsondata["type"]): # type: ignore
                 case common.MessageType.BROADCAST:  
+                    if (addr[0] in prelogic.open_hosts):
+                        continue
                     new_btn = ui.ButtonInteractive(
                             text= f"{username} : {addr[0]}",
                             position= (0,0),
@@ -69,8 +138,33 @@ def open_hosts_update_func():
                     # prelogic.LOG(addr[0] + ": " + common.json.dumps(add))
                 
                 case common.MessageType.REQUEST_CONN:
-                    eventhandler.EventHandler.connection_requested(username=username,
-                                                                   addr=addr)
+                    ui.dialogs.append(ui.Dialog(
+                            text=f"Accept play request from {username}:{addr[0]}?",
+                            button_left=ui.ButtonInteractive("Accept", 
+                                                             (0,0), 
+                                                             callback=task.BasicTask(accept_connection, username, addr), 
+                                                             oneclick=True),
+                            button_right=ui.ButtonInteractive("Reject", 
+                                                             (0,0), 
+                                                             callback=task.BasicTask(reject_connection, username, addr), 
+                                                             oneclick=True),
+                            on_timeout_call=task.BasicTask(reject_connection, username, addr),
+                            timeout=5
+                        )
+                    )
+                
+                case common.MessageType.ANSWER_CONN:
+                    try:
+                        conn_info: dict[str, typing.Any] = jsondata["connection"]
+                        status: bool = conn_info["status"]
+                        if (status):
+                            port:str = conn_info["port"]
+                            conn_task = task.ThreadTask(connect_to, username, addr, port)
+                            conn_task()
+                        else:
+                            rejected_connection(username, addr)
+                    except Exception as e:
+                        prelogic.ERROR(str(e))
             
     # prelogic.open_hosts_update_task = None
 
@@ -127,6 +221,10 @@ def all_update():
             
         
 def main_menu_init():
+    if (prelogic.TCP):
+        prelogic.TCP.stop()
+        prelogic.TCP = None
+    
     common.change_window_size((1280, 720))
     # ui.dialogs.append(
     #     ui.Dialog(
@@ -218,9 +316,7 @@ def main_menu_init():
         ohppb.position[1],    
     )
 
-    if prelogic.UDP==None:
-        prelogic.UDP = connection.UDP_Sock(connection.ALL_INTERFACES, connection.UDP_BROADCAST_PORT)
-        prelogic.LOG("UDP socket opened")
+    open_UDP_socket()
     if (not prelogic.open_hosts_update_task):
         prelogic.open_hosts_update_task = task.ThreadTask(open_hosts_update_func)
         prelogic.open_hosts_update_task()

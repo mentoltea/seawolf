@@ -36,6 +36,7 @@ MYADRRESS = [ip for ip in connection.LOCAL_INFO[2] if not ip.startswith("127.")]
 print(MYADRRESS, MYUSERNAME)
 
 UDP: connection.UDP_Sock | None = None
+TCP: connection.TCP_Sock | None = None
 
 open_hosts: list[str] = [] #adresses
 open_hosts_buttons: list[ui.ButtonInteractive] = []

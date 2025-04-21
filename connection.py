@@ -2,13 +2,14 @@
 # from eventhandler import *
 # import common
 # import eventhandler
-import common
-socket = common.socket
-time = common.time
-task = common.task
-# import socket
-# import time
-# import tasks.task as task
+import common # type: ignore
+from common import socket
+from common import time
+from common import task
+# socket = common.socket
+# time = common.time
+# task = common.task
+
 
 
 
@@ -77,9 +78,9 @@ class UDP_Sock:
         self.thread = None
 
 
-EXPECTED_HOSTS = []
+EXPECTED_HOSTS: list[str] = []
 class TCP_Sock:
-    def __init__(self, host: str, port: str, is_server:bool=False):
+    def __init__(self, host: str, port: str, is_server:bool):
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,7 +90,7 @@ class TCP_Sock:
         self.is_server = is_server
         if is_server:
             self.sock.bind((host, port))
-            self.sock.listen(5)
+            self.sock.listen(5) # 5 attempts to connect to server
         else:
             self.sock.connect((host,port))
             
@@ -109,12 +110,9 @@ class TCP_Sock:
             conn, address = self.sock.accept()
             if (address[0] not in EXPECTED_HOSTS):
                 conn.close()
-                eventhandler.EventHandler.connection_rejected(address[0]) # type: ignore
                 continue
             self.connected = True
             self.conn = conn
-            # self.address = address
-            eventhandler.EventHandler.connection_accepted(address[0]) # type: ignore
             
         if (self.stopflag):
             self.stopflag = False
