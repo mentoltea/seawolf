@@ -117,6 +117,7 @@ class TCP_Sock:
                 continue
             self.connected = True
             self.conn = conn
+            print("connected from client")
             
         if (self.stopflag):
             self.stopflag = False

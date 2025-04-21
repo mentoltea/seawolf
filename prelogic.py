@@ -38,6 +38,7 @@ print(MYADRRESS, MYUSERNAME)
 UDP: connection.UDP_Sock | None = None
 TCP: connection.TCP_Sock | None = None
 
+sent_requests: list[str] = [] #adresses
 open_hosts: list[str] = [] #adresses
 open_hosts_buttons: list[ui.ButtonInteractive] = []
 open_hosts_page_label: ui.Label | None = None
