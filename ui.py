@@ -188,8 +188,9 @@ class Dialog:
             )
     
     def __del__(self):
-        if (self.on_timeout_call):
-            self.on_timeout_call()
+        if (time.time() - self.created_at >= self.timeout):
+            if (self.on_timeout_call):
+                self.on_timeout_call()
     
     def draw(self, surf: pygame.Surface):
         x = (common.WIN_X - self.size_x)/2

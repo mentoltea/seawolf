@@ -53,9 +53,8 @@ def wait_connection(username: str, addr: tuple[str,str], sleeptime: float, times
         if (not prelogic.TCP):
             break
         if (prelogic.TCP.connected):
-            print(str(prelogic.TCP.recv(0.5)))
             successfull_connection(username, addr)
-        
+            return
     if (not prelogic.TCP or not prelogic.TCP.connected):
         reject_connection(username, addr)
 
