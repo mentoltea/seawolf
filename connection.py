@@ -94,7 +94,7 @@ class TCP_Sock:
             self.sock.bind((host, int(port)))
             self.sock.listen(5) # 5 attempts to connect to server
         else:
-            self.sock.connect((host,port))
+            self.sock.connect((host,int(port)))
             
     def __del__(self):
         self.sock.close()
