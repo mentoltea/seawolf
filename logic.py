@@ -216,8 +216,10 @@ def all_update():
             and common.mouse_button == 1):
             ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
             common.mouse_clicked = False
-            
-        if (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
+        if (ui.active_dialog.close):
+            ui.active_dialog = None
+        elif (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
+            ui.active_dialog.on_timeout = True
             ui.active_dialog = None
     
     mb_y = 0

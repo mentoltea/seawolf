@@ -156,6 +156,8 @@ class Dialog:
         self.timeout = timeout
         self.created_at = time.time()
         self.on_timeout_call = on_timeout_call
+        self.on_timeout: bool = False
+        self.close: bool = False
         
         self.content_size_x = max(self.label.size_x, button_size_x)
         self.content_size_y = self.label.size_y + button_size_y + 10
@@ -188,7 +190,7 @@ class Dialog:
             )
     
     def __del__(self):
-        if (time.time() - self.created_at >= self.timeout):
+        if (self.on_timeout):
             if (self.on_timeout_call):
                 self.on_timeout_call()
     
@@ -214,7 +216,7 @@ class Dialog:
     def click_check(self, x: float, y: float):
         if ((self.button_left and self.button_left.click_check(x, y)) 
             or (self.button_right and self.button_right.click_check(x, y))):
-            self.timeout = 0
+            self.close = True
 
 
 active_dialog: Dialog | None = None
