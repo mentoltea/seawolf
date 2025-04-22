@@ -32,6 +32,7 @@ class MessageType:
     
     CHECK_CONN = 'CHECK_CONN' # tcp
     APPROVE_CONN = 'APPROVE_CONN' # tcp
+    
     GAME_EVENT = 'GAME_EVENT' # tcp
     GAME_SYNC = 'GAME_SYNC'
 

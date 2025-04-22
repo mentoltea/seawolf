@@ -95,6 +95,7 @@ class TCP_Sock:
             self.sock.listen(5) # 5 attempts to connect to server
         else:
             self.sock.connect((host,int(port)))
+            self.connected = True
             
     def __del__(self):
         self.sock.close()
@@ -106,6 +107,7 @@ class TCP_Sock:
         if self.conn:
             self.conn.close()
             self.conn = None
+        self.connected = False
         
     def accept(self):
         if not self.is_server:

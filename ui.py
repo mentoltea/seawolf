@@ -172,6 +172,17 @@ class Dialog:
         self.size_x = min(self.content_size_x*1.1, self.content_size_x + 10*2)
         self.size_y = min(self.content_size_y*1.1, self.content_size_y + 10*2)
 
+        # x = (common.WIN_X - self.size_x)/2
+        # y = (common.WIN_Y - self.size_y)/2
+        
+        
+    
+    def __del__(self):
+        if (self.on_timeout):
+            if (self.on_timeout_call):
+                self.on_timeout_call()
+    
+    def draw(self, surf: pygame.Surface):
         x = (common.WIN_X - self.size_x)/2
         y = (common.WIN_Y - self.size_y)/2
         
@@ -195,19 +206,8 @@ class Dialog:
                 x + self.size_x - self.button_right.size_x - 10,
                 y + self.size_y - self.button_right.size_y - 10,
             )
-    
-    def __del__(self):
-        if (self.on_timeout):
-            if (self.on_timeout_call):
-                self.on_timeout_call()
-    
-    def draw(self, surf: pygame.Surface):
-        x = (common.WIN_X - self.size_x)/2
-        y = (common.WIN_Y - self.size_y)/2
-        
         # surf.fill((200,200,200,0))
         pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2, width=0)
-        
         
         self.label.draw(surf)
         

@@ -12,6 +12,7 @@ from common import task
 def ERROR(message: str, duration: float=5):
     message = "ERROR: " + message
     ui.MBs.append(ui.MessageBox(message, duration, fontcolor=(255,0,0)))
+    print(message)
 
 LOGS_ENABLED = False
 

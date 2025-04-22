@@ -1,6 +1,7 @@
 import prelogic
 import typing
 from prelogic import common
+from common import json
 # common = prelogic.common
 
 def check_udp_message_validation(jsondata: dict[str, typing.Any], addr: tuple[str,str]) -> bool:
@@ -83,3 +84,51 @@ def reject_connection_message(port:int = prelogic.connection.TCP_PORT) -> str:
             }
         }
     )
+
+# <- UDP
+# -------------------------------
+#    TCP ->
+
+def check_conn_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.CHECK_CONN}",
+        }
+    )
+
+def check_conn_message_check(data: str | bytes | None) -> bool:
+    if data == None:
+        return False
+    try:
+        jsondata = json.loads(data)
+        _type: str = jsondata["type"]
+        if _type == common.MessageType.CHECK_CONN:
+            return True
+        prelogic.LOG("Unsupported type")
+        return False
+    except Exception as e:
+        prelogic.ERROR(str(e))
+        prelogic.LOG("Invalid json file structure")
+        return False
+
+def approve_conn_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.APPROVE_CONN}",
+        }
+    )
+
+def approve_conn_message_check(data: str | bytes | None) -> bool:
+    if data == None:
+        return False
+    try:
+        jsondata = json.loads(data)
+        _type: str = jsondata["type"]
+        if _type == common.MessageType.APPROVE_CONN:
+            return True
+        prelogic.LOG("Unsupported type")
+        return False
+    except Exception as e:
+        prelogic.ERROR(str(e))
+        prelogic.LOG("Invalid json file structure")
+        return False
