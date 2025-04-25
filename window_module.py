@@ -39,6 +39,9 @@ def main_menu_window_update():
     if (prelogic.open_hosts_page_label): 
         prelogic.open_hosts_page_label.draw(common.window)
 
+def choose_mode_menu_window_update():
+    pass
+
 def preparing_menu_window_update():
     pass
 
@@ -52,6 +55,9 @@ def window_update():
     
     all_window_update()
     match logic.game.gamestate:
+        case common.GameState.CHOOSE_MODE_MENU:
+            choose_mode_menu_window_update()
+        
         case logic.common.GameState.MAIN_MENU:
             main_menu_window_update()
         

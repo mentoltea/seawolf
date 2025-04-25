@@ -21,7 +21,11 @@ from connection import common
 ALPLABET = 'abcdefghij'
 SHIPS = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 last_gamestate: str|None = None
-gamestate: str = common.GameState.MAIN_MENU
+gamestate: str = common.GameState.CHOOSE_MODE_MENU
+
+def set_gamestate(newstate: str):
+    global gamestate
+    gamestate = newstate
 
 
 def empty_map(default:int=0) -> list[list[int]]:

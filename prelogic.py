@@ -44,6 +44,6 @@ open_hosts: list[str] = [] #adresses
 open_hosts_buttons: list[ui.ButtonInteractive] = []
 open_hosts_page_label: ui.Label | None = None
 open_hosts_page = 0
-open_hosts_onepage = 10
+open_hosts_onepage = 4
 open_hosts_update_task: task.ThreadTask | None = None
 open_hosts_selfhost_label = None

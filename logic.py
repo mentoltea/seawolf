@@ -2,7 +2,7 @@ import typing
 import json
 import time
 
-import eventhandler
+import eventhandler # type: ignore
 from eventhandler import messages
 from messages import prelogic
 from prelogic import ui
@@ -287,7 +287,7 @@ def main_menu_init():
         prelogic.TCP.stop()
         prelogic.TCP = None
     
-    common.change_window_size((720, 420))
+    common.change_window_size((720, 180))
     
     my_name_label = ui.Label(
         text=f"My name: {prelogic.MYUSERNAME}",
@@ -298,14 +298,9 @@ def main_menu_init():
     )
     
     quit_button = ui.ButtonInteractive(
-        text = "Quit",
+        text = "Return back",
         position=(0,0),
-        callback = task.JoinedTask(
-            [
-                task.BasicTask(eventhandler.EventHandler.quit),
-                task.BasicTask(common.STOP),
-            ]
-        ),
+        callback = task.BasicTask(game.set_gamestate, common.GameState.CHOOSE_MODE_MENU),
         font=ui.Font22
     )
     quit_button_x = 10
@@ -376,7 +371,8 @@ def main_menu_init():
     
     my_name_label.position = (
         quit_button_x,
-        prelogic.open_hosts_page_label.position[1] - 20 - my_name_label.size_y
+        # prelogic.open_hosts_page_label.position[1] - 20 - my_name_label.size_y
+        20
     )
     ui.active_labels.append(my_name_label)
 
@@ -427,6 +423,48 @@ def main_menu_deinit():
         prelogic.open_hosts_update_task = None
     
 
+def choose_mode_menu_init():
+    common.change_window_size((300, 200))
+    
+    
+    singleplayer_button = ui.ButtonInteractive(
+        text="Singleplayer",
+        position=(0,0),
+        callback= task.BasicTask(print, "Not implemented yet"),
+        font=ui.Font24
+    )
+    singleplayer_button.position = (common.WIN_X/2 - singleplayer_button.size_x/2,
+                                    common.WIN_Y*1/4 - singleplayer_button.size_y/2,)
+    ui.active_buttons.append(singleplayer_button)
+    
+    
+    multiplayer_button = ui.ButtonInteractive(
+        text="Multiplayer",
+        position=(0,0),
+        callback= task.BasicTask(game.set_gamestate, common.GameState.MAIN_MENU),
+        font=ui.Font24
+    )
+    multiplayer_button.position = (common.WIN_X/2 - multiplayer_button.size_x/2,
+                                    common.WIN_Y*2/4 - multiplayer_button.size_y/2,)
+    ui.active_buttons.append(multiplayer_button)
+    
+    
+    quit_button = ui.ButtonInteractive(
+        text="Quit",
+        position=(0,0),
+        callback= common.STOP,
+        font=ui.Font24
+    )
+    quit_button.position = (common.WIN_X/2 - quit_button.size_x/2,
+                                    common.WIN_Y*3/4 - quit_button.size_y/2,)
+    ui.active_buttons.append(quit_button)
+    
+    
+def choose_mode_menu_update():
+    pass
+def choose_mode_menu_deinit():
+    pass
+
 def preparing_menu_init():
     common.change_window_size((900,400))
 
@@ -449,6 +487,8 @@ def game_update():
         ui.active_labels.clear()
         if (game.last_gamestate!=None): prelogic.LOG(game.last_gamestate + " DEINIT")
         match game.last_gamestate:
+            case common.GameState.CHOOSE_MODE_MENU:
+                choose_mode_menu_deinit()
             case common.GameState.MAIN_MENU:
                 main_menu_deinit()
             case common.GameState.PREPARING_MENU:
@@ -459,6 +499,8 @@ def game_update():
                 pass
         prelogic.LOG(game.gamestate + " INIT")
         match game.gamestate:
+            case common.GameState.CHOOSE_MODE_MENU:
+                choose_mode_menu_init()
             case common.GameState.MAIN_MENU:
                 main_menu_init()
             case common.GameState.PREPARING_MENU:
@@ -469,6 +511,9 @@ def game_update():
                 pass
         game.last_gamestate = game.gamestate
     match game.gamestate:
+        case common.GameState.CHOOSE_MODE_MENU:
+            choose_mode_menu_update()
+        
         case common.GameState.MAIN_MENU:
             main_menu_update()
         
