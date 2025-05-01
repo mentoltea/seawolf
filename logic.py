@@ -18,36 +18,36 @@ from prelogic import task
 # import game
 # import tasks.task as task
 
-def check_connection_alive(username: str, addr: tuple[str,str], interval: float = 1):
-    if (prelogic.TCP == None): 
-        rejected_connection(username, addr)
-        return
+# def check_connection_alive(username: str, addr: tuple[str,str], interval: float = 1):
+#     if (prelogic.TCP == None): 
+#         rejected_connection(username, addr)
+#         return
     
-    shift = False
-    if (prelogic.TCP.is_server):
-        shift = True
-    while (prelogic.TCP != None and prelogic.TCP.connected): # type: ignore
-        # _ = prelogic.TCP.recv(1) 
-        if (shift):
-            prelogic.TCP.send(messages.check_conn_message())
-            data = prelogic.TCP.recv(3*interval)
-            if (not messages.approve_conn_message_check(data)):
-                break
-            print(data)
-        else:
-            data = prelogic.TCP.recv(3*interval)
-            if (messages.check_conn_message_check(data)):
-                prelogic.TCP.send(messages.approve_conn_message())
-            else:
-                break
-            print(data)
+#     shift = False
+#     if (prelogic.TCP.is_server):
+#         shift = True
+#     while (prelogic.TCP != None and prelogic.TCP.connected): # type: ignore
+#         # _ = prelogic.TCP.recv(1) 
+#         if (shift):
+#             prelogic.TCP.send(messages.check_conn_message())
+#             data = prelogic.TCP.recv(3*interval)
+#             if (not messages.approve_conn_message_check(data)):
+#                 break
+#             print(data)
+#         else:
+#             data = prelogic.TCP.recv(3*interval)
+#             if (messages.check_conn_message_check(data)):
+#                 prelogic.TCP.send(messages.approve_conn_message())
+#             else:
+#                 break
+#             print(data)
         
-        shift = not shift
-        # if connection was closed, 
-        # ConnectionError will raise and be catched inside TCP,
-        # calling TCP.close() and setting TCP.connected = False
-        time.sleep(interval) 
-    rejected_connection(username, addr)
+#         shift = not shift
+#         # if connection was closed, 
+#         # ConnectionError will raise and be catched inside TCP,
+#         # calling TCP.close() and setting TCP.connected = False
+#         time.sleep(interval) 
+#     rejected_connection(username, addr)
     
 
 def open_UDP_socket():
@@ -56,25 +56,19 @@ def open_UDP_socket():
         prelogic.LOG("UDP socket opened")
 
 def successfull_connection(username: str, addr: tuple[str,str]):
-    if (prelogic.TCP): print(prelogic.TCP.recv())
-    check_conn_task = task.ThreadTask(check_connection_alive, username, addr)
-    check_conn_task()
-    ui.dialogs.append(
-        ui.Dialog(
-            text="Succesfully connected!",
-            button_left=ui.ButtonInteractive(
-                text="Close connection",
-                position=(0,0),
-                callback=task.BasicTask(reject_connection, username, addr)
-            )
-        )
-    )
-    game.gamestate = common.GameState.PREPARING_MENU
+    if (prelogic.TCP): print(prelogic.TCP.recv(2))
+    # check_conn_task = task.ThreadTask(check_connection_alive, username, addr)
+    # check_conn_task()
+    prelogic.ActiveConnection = prelogic.TCP
+    
+    # game.gamestate = common.GameState.PREPARING_MENU
+    game.set_gamestate(common.GameState.PREPARING_MENU)
 
 def connect_to(username: str, addr: tuple[str,str], port: str):
     try:
         prelogic.TCP = connection.TCP_Sock(addr[0], port, is_server=False)
-        prelogic.TCP.send("Success from client")
+        # prelogic.TCP.send("Success from client")
+        prelogic.safesend(prelogic.TCP, "Success from client")
         successfull_connection(username, addr)
     except Exception as e:
         prelogic.ERROR(str(e))
@@ -88,7 +82,8 @@ def wait_connection(username: str, addr: tuple[str,str], sleeptime: float, times
         if (not prelogic.TCP):
             break
         if (prelogic.TCP.connected):
-            prelogic.TCP.send("Success from server")
+            # prelogic.TCP.send("Success from server")
+            prelogic.safesend(prelogic.TCP, "Success from server")
             successfull_connection(username, addr)
             return
     if (not prelogic.TCP or not prelogic.TCP.connected):
@@ -106,7 +101,8 @@ def accept_connection(username: str, addr: tuple[str,str]):
     wait_task()
 
 def rejected_connection(username: str, addr: tuple[str,str]):
-    game.gamestate = common.GameState.MAIN_MENU
+    # game.gamestate = common.GameState.MAIN_MENU
+    game.set_gamestate(common.GameState.MAIN_MENU)
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
@@ -117,7 +113,8 @@ def rejected_connection(username: str, addr: tuple[str,str]):
     prelogic.LOG(f"Rejection from {username}:{addr[0]}")
 
 def reject_connection(username: str, addr: tuple[str,str]):
-    game.gamestate = common.GameState.MAIN_MENU
+    # game.gamestate = common.GameState.MAIN_MENU
+    game.set_gamestate(common.GameState.MAIN_MENU)
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
@@ -283,6 +280,10 @@ def all_update():
             
         
 def main_menu_init():
+    if (prelogic.ActiveConnection):
+        prelogic.ActiveConnection.stop()
+        prelogic.ActiveConnection = None
+    
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
@@ -465,13 +466,168 @@ def choose_mode_menu_update():
 def choose_mode_menu_deinit():
     pass
 
+def connection_check_func(sec_per_check: float = 3):
+    while (prelogic.ActiveConnection != None and prelogic.ActiveConnection.connected):
+        if (time.time() - sec_per_check >= prelogic.LastCheckedConnection):
+            if not prelogic.safesend(prelogic.ActiveConnection, messages.check_conn_message()):
+                game.set_gamestate(common.GameState.MAIN_MENU)
+                return
+            if not prelogic.ActiveConnection.connected:
+                game.set_gamestate(common.GameState.MAIN_MENU)
+                return
+            prelogic.LastCheckedConnection = time.time()
+        time.sleep(sec_per_check)
+    game.set_gamestate(common.GameState.MAIN_MENU)
+
+def prep_menu_data_recv_func(interval: float = 1):
+    while (game.gamestate == common.GameState.PREPARING_MENU):
+        if (prelogic.ActiveConnection == None or prelogic.ActiveConnection.connected == False):
+            game.set_gamestate(common.GameState.MAIN_MENU)
+            return
+        
+        rcv = prelogic.ActiveConnection.recv(interval/2)
+        if (rcv == None): continue
+        
+        datas = rcv.decode("utf-8").split(messages.TCP_DELIMITER)
+        for data in datas:
+            if data == "": continue
+            print(data)
+            # data = data.removeprefix(messages.TCP_DELIMITER).removesuffix(messages.TCP_DELIMITER)
+            try:
+                jsondata = json.loads(data)
+                mtype : str = jsondata["type"]
+            
+                match (mtype):
+                    case common.MessageType.CHECK_CONN:
+                        prelogic.LastCheckedConnection = time.time()
+                    
+                    case common.MessageType.GAME_EVENT:
+                        event: dict[str, typing.Any] = jsondata["event"]
+                        etype: str = event["type"]
+                        match (etype):
+                            case common.GameEventType.READY:
+                                if (game.game):
+                                    game.game.opponent_ready = True
+                                if (prelogic.opponent_ready_label):
+                                    prelogic.opponent_ready_label.set_text("Opponent Is Ready")
+                                    prelogic.opponent_ready_label.fontcolor = ui.LIGHTGREEN
+                            case common.GameEventType.UNREADY:
+                                if (game.game):
+                                    game.game.opponent_ready = False
+                                if (prelogic.opponent_ready_label):
+                                    prelogic.opponent_ready_label.set_text("Opponent Is Not Ready")
+                                    prelogic.opponent_ready_label.fontcolor = ui.LIGHTRED
+                                
+                            case _:
+                                prelogic.LOG(f"Unknown event type {etype}")
+                        
+                    
+                    case _:
+                        prelogic.LOG(f"Unknown message type {mtype}")
+                
+            except Exception as e:
+                prelogic.ERROR(str(e))
+                print(data)
+                game.set_gamestate(common.GameState.MAIN_MENU)
+                return
+
+        time.sleep(interval)
+
+def set_ready(state: bool):
+    if (game.game):
+        game.game.ready = state
+        
+    if (prelogic.ready_button):
+        if state:
+            prelogic.ready_button.set_text("I Am Ready")
+            prelogic.ready_button.fontcolor = ui.VERYLIGHTGREEN
+        else:
+            prelogic.ready_button.set_text("I Am Not Ready")
+            prelogic.ready_button.fontcolor = ui.VERYLIGHTRED
+            
+    if (prelogic.ActiveConnection):
+        if state:
+            prelogic.safesend(prelogic.ActiveConnection, messages.ready_message())
+        else:
+            prelogic.safesend(prelogic.ActiveConnection, messages.unready_message())
+    
+def swicth_ready():
+    if (game.game):
+        current = game.game.ready
+        set_ready(not current)
+     
+
 def preparing_menu_init():
-    common.change_window_size((900,400))
+    common.change_window_size((850,600))
+    game.game = game.GameClass()
+    if (prelogic.ActiveConnection == None):
+        game.gamestate = common.GameState.MAIN_MENU
+        return
+    if prelogic.ActiveConnection.is_server:
+        game.game.turn = 0
+    else:
+        game.game.turn = 1
+        
+    conn_check_task = task.ThreadTask(connection_check_func)
+    conn_check_task()
+    
+    data_rcv_task = task.ThreadTask(prep_menu_data_recv_func)
+    data_rcv_task()
+    
+    
+    prelogic.editmap_pos = (40, 40)
+    prelogic.editmap_tilesize = 45
+    prelogic.editmap_size = prelogic.editmap_tilesize*10
+    
+    
+    autoplace_button = ui.ButtonInteractive(
+        text="Automatic placement",
+        position= (0,0),
+        callback= task.BasicTask(print, "Not implemented yet"),
+        font=ui.Font30,
+        backcolor=(230,230,230)
+    )
+    autoplace_button.position = (prelogic.editmap_pos[0] + (prelogic.editmap_size-autoplace_button.size_x)/2,
+                                 prelogic.editmap_pos[1] + prelogic.editmap_size + 10)
+    ui.active_buttons.append(autoplace_button)
+    
+    prelogic.ready_button = ui.ButtonInteractive(
+        text="I Am Not Ready",
+        position= (0,0),
+        callback= swicth_ready,
+        font=ui.Font30,
+    )
+    prelogic.ready_button.position = (
+        prelogic.editmap_pos[0] + prelogic.editmap_size + 20,
+        autoplace_button.position[1]
+    )
+    ui.active_buttons.append(prelogic.ready_button)
+    
+    prelogic.opponent_ready_label = ui.Label(
+        text="Opponent Is Not Ready",
+        position=(0,0),
+        center=True,
+        font=ui.Font30
+    )
+    prelogic.opponent_ready_label.position = (
+        prelogic.editmap_pos[0] + prelogic.editmap_size + 20,
+        prelogic.ready_button.position[1] - 10 - prelogic.opponent_ready_label.size_y
+    )
+    
+    prelogic.ready_button.position = (
+        prelogic.opponent_ready_label.position[0] + (prelogic.opponent_ready_label.size_x - prelogic.ready_button.size_x)/2,
+        prelogic.ready_button.position[1]
+    )
+    ui.active_labels.append(prelogic.opponent_ready_label)
+    
+    set_ready(False)
 
 def preparing_menu_update():
-    pass
+    prelogic.editmap_mouse_ipos = ((common.mouse_pos[0]-prelogic.editmap_pos[0])//prelogic.editmap_tilesize, 
+                                   (common.mouse_pos[1]-prelogic.editmap_pos[1])//prelogic.editmap_tilesize)
+        
 def preparing_menu_deinit():
-    pass
+    prelogic.ready_button = None
 
 def game_menu_init():
     pass

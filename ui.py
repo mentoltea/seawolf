@@ -13,10 +13,38 @@ Font18 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 18)
 Font20 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 20)
 Font22 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 22)
 Font24 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 24)
+Font26 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 26)
+Font28 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 28)
+Font30 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 30)
+Font32 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 32)
+Font34 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 34)
+Font36 = pygame.font.Font(pygame.font.match_font('timesnewroman'), 36)
+
 DefaultFont = Font20
 
 def draw_text(text: str, x: float, y: float, surf: pygame.Surface = common.window, font: pygame.font.Font = DefaultFont, color:tuple[int,int,int]=(0,0,0)):
     surf.blit(font.render(text,True,color), (x,y))
+
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+
+GRAY = (70,70,70)
+LIGHTGRAY = (175,175,175)
+
+RED = (255,0,0)
+LIGHTRED = (150, 50, 50)
+VERYLIGHTRED = (210, 35, 35)
+
+GREEN = (0, 255, 0)
+LIGHTGREEN = (50, 150, 50)
+VERYLIGHTGREEN = (35, 210, 35)
+
+BLUE = (0, 0, 255)
+LIGHTBLUE = (50, 50, 150)
+VERYLIGHTBLUE = (35, 35, 210)
+
+EMPTY = (220, 220, 200)
+
 
 def color_inverse(color: tuple[int,int,int]):
     return (255-color[0], 255-color[1], 255-color[2])
@@ -24,6 +52,7 @@ def color_inverse(color: tuple[int,int,int]):
 class Label:
     def __init__(self, text: str, position: tuple[float,float], center:bool=False, font:pygame.font.Font=DefaultFont, 
                  fontcolor:tuple[int,int,int]=(0,0,0), backcolor:tuple[int,int,int]=(235,235,235),
+                 hovereffect:bool=False,
                  add: typing.Any =None):
         self.text = text
         self.position = position
@@ -39,10 +68,16 @@ class Label:
             self.size_x = min(self.size_x, self.text_size_x+20)
             self.size_y = min(self.size_y, self.text_size_y+10)
         
+        self.hovereffect = hovereffect
         self.add = add # additional info (not used in class)
         
     def draw(self, surf:pygame.Surface, *args : typing.Any, **kwargs: typing.Any):
-        pygame.draw.rect(surf, self.backcolor, pygame.Rect(self.position[0], self.position[1], self.size_x, self.size_y), border_radius=2)
+        bcolor = self.backcolor
+        if (self.hovereffect):
+            if (common.inrange(common.mouse_pos[0], self.position[0], self.position[0]+self.size_x) and
+                common.inrange(common.mouse_pos[1], self.position[1], self.position[1]+self.size_y)):
+                bcolor = tuple(map(lambda v: max(0, v-25), bcolor))
+        pygame.draw.rect(surf, bcolor, pygame.Rect(self.position[0], self.position[1], self.size_x, self.size_y), border_radius=2)
         text_x = self.position[0] + 5
         text_y = self.position[1] + 5
         if self.center:
@@ -50,9 +85,21 @@ class Label:
             text_y = self.position[1] + self.size_y/2 - self.text_size_y/2
         draw_text(self.text, text_x, text_y, font=self.font, surf=surf, color=self.fontcolor)
         
-    def set_text(self, newtext: str):
+    def set_text(self, newtext: str, savecenter:bool=True):
+        (oldsize_x, oldsize_y) = (self.size_x, self.size_y)
+        oldposition = self.position
         self.text = newtext
         (self.text_size_x, self.text_size_y) = self.font.size(self.text)
+        self.size_x = self.text_size_x + 10
+        self.size_y = self.text_size_y + 10
+        if self.center:
+            self.size_x = min(self.size_x, self.text_size_x+20)
+            self.size_y = min(self.size_y, self.text_size_y+10)
+        
+        self.position = (
+            oldposition[0] + (oldsize_x - self.size_x)/2,
+            oldposition[1] + (oldsize_y - self.size_y)/2,
+        )
 
 
 active_labels: list[Label] = []
@@ -60,6 +107,7 @@ active_labels: list[Label] = []
 class MessageBox(Label):
     def __init__(self, message:str, timeout:float, center:bool=True, font:pygame.font.Font=DefaultFont, 
                  fontcolor:tuple[int,int,int]=(0,0,0), backcolor:tuple[int,int,int]=(220,220,220), 
+                 hovereffect:bool=True,
                  add:typing.Any=None):
         super().__init__(
             text= message,
@@ -68,6 +116,7 @@ class MessageBox(Label):
             font=font,
             fontcolor=fontcolor,
             backcolor=backcolor,
+            hovereffect=hovereffect,
             add=add
         )
         self.size_y += 3
@@ -76,7 +125,12 @@ class MessageBox(Label):
         self.created = time.time()
 
     def draw(self, surf:pygame.Surface, x:float, y:float):
-        pygame.draw.rect(surf, self.backcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2)
+        bcolor = self.backcolor
+        if (common.inrange(common.mouse_pos[0], x, x+self.size_x) and
+            common.inrange(common.mouse_pos[1], y, y+self.size_y)):
+            bcolor = tuple(map(lambda v: max(0, v-25), bcolor))
+        
+        pygame.draw.rect(surf, bcolor, pygame.Rect(x, y, self.size_x, self.size_y), border_radius=2)
         
         text_x = x + 0.1*self.size_x
         text_y = y + 0.1*self.size_y
@@ -88,11 +142,11 @@ class MessageBox(Label):
         
         timefull = 1 - (time.time() - self.created)/self.timeout
         pygame.draw.rect(surf, color_inverse(self.backcolor), pygame.Rect(x, y + self.size_y*0.9, self.size_x*timefull, self.size_y*0.1), border_radius=1)
+    
 
 MBs: list[MessageBox] = []
 
 
-    
 
 
 class ButtonInteractive(Label):
@@ -100,8 +154,18 @@ class ButtonInteractive(Label):
                  callback: typing.Callable[[], None] | task.BasicTask | task.MultyTask | None,
                  center:bool=True, oneclick:bool=False, font:pygame.font.Font=DefaultFont, 
                  fontcolor:tuple[int,int,int]=(0,0,0), backcolor:tuple[int,int,int]=(210,210,220),
+                 hovereffect:bool=True,
                  add:typing.Any=None):
-        super().__init__(text, position, center, font, fontcolor, backcolor, add)
+        super().__init__(
+            text= text,
+            position=position,
+            center=center,
+            font=font,
+            fontcolor=fontcolor,
+            backcolor=backcolor,
+            hovereffect=hovereffect,
+            add=add
+        )
         self.callback = callback
         self.clicks = 0
         self.oneclick = oneclick
@@ -115,6 +179,7 @@ class ButtonInteractive(Label):
     def click_check(self, x: float, y: float):
         if (common.inrange(x, self.position[0], self.position[0] + self.size_x) and common.inrange(y, self.position[1], self.position[1] + self.size_y)):
             self.avtivate()
+            common.mouse_clicked = False
             # print("click button")
             return True
         return False

@@ -136,7 +136,7 @@ class TCP_Sock:
             print(f"Send failed: {e}")
             self.stop()
     
-    def recv(self, timeout:float=1, buffsize:int=4096):
+    def recv(self, timeout:float=1, buffsize:int=4096) -> bytes | None:
         target = self.conn if self.is_server and self.conn else self.sock
         if not target:
             return None

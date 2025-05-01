@@ -1,14 +1,4 @@
-# enemy map:
-# 0 - unknown cell
-# 1 - empty cell
-# 2 - shot cell
-# 3 - killed cell
 
-# my map:
-# 0 - unknown cell (doesnt exists)
-# 1 - empty cell
-# 2 - shot cell
-# 3 - killed cell
 
 
 # import common
@@ -52,6 +42,7 @@ class GameClass:
     def __init__(self):
         # self.state = GameState.PREPARING_MENU
         self.ready = False
+        self.opponent_ready = False
         
         # 0 - my turn
         # 1 - enemy turn
@@ -64,8 +55,16 @@ class GameClass:
         self.editmap = empty_map(1) 
         self.tempmap = empty_map(1)
         
+        # types on map:
+        # 0 - unknown cell
+        # 1 - empty cell
+        # 2 - boat cell, not shot
+        # 3 - boat cell, shot
+        # 4 - boat cell, killed
+        
         # game maps
         self.mymap = empty_map(1)
         self.enemymap = empty_map(0)
         
         
+game: GameClass | None = None

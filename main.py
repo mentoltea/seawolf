@@ -6,13 +6,15 @@ from common import pygame
 
 
 # prelogic.LOGS_ENABLED = True
+tick = 0
 
 while common.RUN:
     common.clock.tick(common.FPS)
+    tick = (tick + 1) % common.FPS
     # game.last_gamestate = game.gamestate
     
     common.mouse_clicked = False
-    
+    common.mouse_pos = pygame.mouse.get_pos()
     common.EVENTS = pygame.event.get()
     for event in common.EVENTS:
         if (event.type == pygame.QUIT):

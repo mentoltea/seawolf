@@ -89,12 +89,61 @@ def reject_connection_message(port:int = prelogic.connection.TCP_PORT) -> str:
 # -------------------------------
 #    TCP ->
 
+TCP_DELIMITER = ";"
+
 def check_conn_message() -> str:
     return common.json.dumps(
         {
             "type" : f"{common.MessageType.CHECK_CONN}",
         }
-    )
+    ) + TCP_DELIMITER
+
+def ready_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.READY}"
+            }
+        }
+    ) + TCP_DELIMITER
+    
+def unready_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.UNREADY}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def message_is_check_conn(data: str | bytes | None) -> bool:
+    if data == None:
+        return False
+    try:
+        jsondata = json.loads(data)
+        _type: str = jsondata["type"]
+        if _type == common.MessageType.CHECK_CONN:
+            return True
+        return False
+    except Exception as e:
+        print(str(e))
+        return False
 
 def check_conn_message_check(data: str | bytes | None) -> bool:
     if data == None:

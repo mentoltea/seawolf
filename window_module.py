@@ -3,10 +3,12 @@ import logic
 from logic import prelogic
 from prelogic import ui
 from prelogic import common
+from prelogic import game
 from common import pygame
 # import prelogic
 # import pygame
 # import common
+
 
 def get_trans(Surf : pygame.Surface, width: float, height: float, angle: float):
     return pygame.transform.rotate(pygame.transform.scale(Surf, (int(round(width)), int(round(height)))), int(round(angle)))
@@ -42,8 +44,52 @@ def main_menu_window_update():
 def choose_mode_menu_window_update():
     pass
 
+def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap: list[list[int]]):
+    font = ui.Font24
+    for iy in range(10):
+        letter = str(iy+1)
+        (size_x, size_y) = font.size(letter) # type: ignore
+        ui.draw_text(letter, x-size_x-5, y + iy*tilesize + (tilesize-size_y)/2, surf=surf, font=font)
+    
+    for ix in range(10):
+        letter = game.ALPLABET[ix].upper()
+        (size_x, size_y) = font.size(letter) # type: ignore
+        ui.draw_text(letter, x + ix*tilesize + (tilesize-size_x)/2, y - size_y - 5, surf=surf, font=font)
+    
+    mouse_ipos = (
+        (common.mouse_pos[0]-x)//tilesize,
+        (common.mouse_pos[1]-y)//tilesize
+    )
+    
+    for iy in range(10):
+        for ix in range(10):
+            clr = ui.WHITE
+            match (gamemap[iy][ix]):
+                # 0 - unknown cell
+                case 0:
+                    clr = ui.WHITE
+                # 1 - empty cell
+                case 1:
+                    clr = ui.EMPTY
+                # 2 - boat cell, not shot
+                case 2:
+                    clr = ui.LIGHTGRAY
+                # 3 - boat cell, shot
+                case 3:
+                    clr = ui.LIGHTRED
+                # 4 - boat cell, killed
+                case 4:
+                    clr = ui.RED
+                case _:
+                    pass
+            if ((ix, iy) == mouse_ipos):
+                clr = tuple(map(lambda v: max(0, v-25), clr))
+            pygame.draw.rect(surf, clr, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize))
+            pygame.draw.rect(surf, ui.BLACK, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize), 1)
+
 def preparing_menu_window_update():
-    pass
+    if (game.game):
+        draw_gamemap(common.window, prelogic.editmap_pos[0], prelogic.editmap_pos[1], prelogic.editmap_tilesize, game.game.editmap)
 
 def game_menu_window_update():
     pass
