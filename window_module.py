@@ -57,9 +57,17 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
         ui.draw_text(letter, x + ix*tilesize + (tilesize-size_x)/2, y - size_y - 5, surf=surf, font=font)
     
     mouse_ipos = (
-        (common.mouse_pos[0]-x)//tilesize,
-        (common.mouse_pos[1]-y)//tilesize
+        int((common.mouse_pos[0]-x)//tilesize),
+        int((common.mouse_pos[1]-y)//tilesize)
     )
+    holding_pts: list[tuple[int, int]] = []
+    (cx,cy) = mouse_ipos
+    for _ in range(prelogic.holding_ship):
+        holding_pts.append((cx, cy))
+        if (prelogic.holding_orientation == 0):
+            cx += 1
+        else:
+            cy += 1
     
     for iy in range(10):
         for ix in range(10):
@@ -82,7 +90,7 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
                     clr = ui.RED
                 case _:
                     pass
-            if ((ix, iy) == mouse_ipos):
+            if ((ix, iy) == mouse_ipos or (ix,iy) in holding_pts):
                 clr = tuple(map(lambda v: max(0, v-25), clr))
             pygame.draw.rect(surf, clr, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize))
             pygame.draw.rect(surf, ui.BLACK, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize), 1)
@@ -90,6 +98,13 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
 def preparing_menu_window_update():
     if (game.game):
         draw_gamemap(common.window, prelogic.editmap_pos[0], prelogic.editmap_pos[1], prelogic.editmap_tilesize, game.game.editmap)
+    
+    if (prelogic.holding_ship):
+        if prelogic.holding_orientation==0:
+            pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 20, 10))
+        else:
+            pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 10, 20))
+            
 
 def game_menu_window_update():
     pass

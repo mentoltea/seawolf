@@ -21,7 +21,8 @@ def LOG(message: str, duration: float=3):
     global LOGS_ENABLED
     message = "LOG: " + message
     if LOGS_ENABLED: 
-        ui.MBs.append(ui.MessageBox(message, duration, backcolor=(200,200,200)))
+        print(message)
+        # ui.MBs.append(ui.MessageBox(message, duration, backcolor=(200,200,200)))
         
 def INFO(message: str, duration: float=3):
     global LOGS_ENABLED
@@ -54,6 +55,8 @@ TCP: connection.TCP_Sock | None = None
 ActiveConnection: connection.TCP_Sock | None = None
 LastCheckedConnection: float = time.time()
 
+
+# MAIN MENU
 sent_requests: list[str] = [] #adresses
 open_hosts: list[str] = [] #adresses
 open_hosts_buttons: list[ui.ButtonInteractive] = []
@@ -63,7 +66,7 @@ open_hosts_onepage = 4
 open_hosts_update_task: task.ThreadTask | None = None
 open_hosts_selfhost_label = None
 
-
+# PREPARE MENU
 editmap_pos = (40, 40)
 editmap_tilesize = 45
 editmap_size = editmap_tilesize*10
@@ -73,3 +76,13 @@ ready_button: ui.ButtonInteractive | None = None
 opponent_ready_label: ui.Label | None = None
 ready_cooldown: float = 0
 max_ready_cooldown: float = 2
+
+current_ships = game.SHIPS_COUNT.copy()
+current_ships_buttons: list[ui.ButtonInteractive] = []
+
+# 0 - not holding
+# number - ship with that length
+holding_ship: int = 0
+# 0 - horyzontal
+# 1 - vertical
+holding_orientation: int = 0

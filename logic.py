@@ -1,7 +1,7 @@
 import typing
 import json
 import time
-
+import random
 import eventhandler # type: ignore
 from eventhandler import messages
 from messages import prelogic
@@ -253,10 +253,10 @@ def all_update():
         ui.active_dialog = ui.dialogs.pop(0)
         
     if (ui.active_dialog):
-        if (common.mouse_clicked 
+        if (common.mouse_button_up 
             and common.mouse_button == 1):
             ui.active_dialog.click_check(common.mouse_pos[0], common.mouse_pos[1])
-            common.mouse_clicked = False
+            common.mouse_button_up = False
         if (ui.active_dialog.close):
             ui.active_dialog = None
         elif (time.time() - ui.active_dialog.created_at >= ui.active_dialog.timeout):
@@ -266,12 +266,12 @@ def all_update():
     mb_y = 0
     for box in ui.MBs:
         if ((time.time() - box.created >=  box.timeout) 
-            or (common.mouse_clicked and common.mouse_button == 1 and common.inrange(common.mouse_pos[0], 0, box.size_x) and common.inrange(common.mouse_pos[1], mb_y, mb_y + box.size_y))):
+            or (common.mouse_button_up and common.mouse_button == 1 and common.inrange(common.mouse_pos[0], 0, box.size_x) and common.inrange(common.mouse_pos[1], mb_y, mb_y + box.size_y))):
             ui.MBs.remove(box)
         mb_y += box.size_y+1
     
     for button in ui.active_buttons:
-        if (common.mouse_clicked 
+        if (common.mouse_button_up 
             and common.mouse_button == 1
             and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
@@ -409,7 +409,7 @@ def main_menu_update():
                            common.WIN_Y - pady - button.size_y - cury)
         cury += button.size_y + pady
         
-        if (common.mouse_clicked 
+        if (common.mouse_button_up 
             and common.mouse_button == 1
             and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
             and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
@@ -479,8 +479,8 @@ def connection_check_func(sec_per_check: float = 3):
         time.sleep(sec_per_check)
     game.set_gamestate(common.GameState.MAIN_MENU)
 
-def prep_menu_data_recv_func(interval: float = 1):
-    while (game.gamestate == common.GameState.PREPARING_MENU):
+def prep_menu_game_menu_data_recv_func(interval: float = 1):
+    while (game.gamestate in [common.GameState.PREPARING_MENU, common.GameState.GAME_MENU]):
         if (prelogic.ActiveConnection == None or prelogic.ActiveConnection.connected == False):
             game.set_gamestate(common.GameState.MAIN_MENU)
             return
@@ -517,6 +517,40 @@ def prep_menu_data_recv_func(interval: float = 1):
                                 if (prelogic.opponent_ready_label):
                                     prelogic.opponent_ready_label.set_text("Opponent Is Not Ready")
                                     prelogic.opponent_ready_label.fontcolor = ui.LIGHTRED
+                            
+                            case common.GameEventType.ASK_START_GAME:
+                                if (game.game):
+                                    
+                                    game.game.opponent_ready = True
+                                    if (prelogic.opponent_ready_label):
+                                        prelogic.opponent_ready_label.set_text("Opponent Is Ready")
+                                        prelogic.opponent_ready_label.fontcolor = ui.LIGHTGREEN
+                                        
+                                    if (game.game.ready):
+                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_appr_message())
+                                    else:
+                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
+                            
+                            case common.GameEventType.START_GAME_DECLINE:
+                                if (game.game):
+                                    game.game.opponent_ready = False
+                                if (prelogic.opponent_ready_label):
+                                    prelogic.opponent_ready_label.set_text("Opponent Is Not Ready")
+                                    prelogic.opponent_ready_label.fontcolor = ui.LIGHTRED
+                                # prelogic.INFO("Opponent is not ready yet")
+                                
+                            case common.GameEventType.START_GAME_APPROVE:
+                                if game.game:
+                                    if game.game.ready:
+                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_sappr_message())
+                                        game.set_gamestate(common.GameState.GAME_MENU)
+                                    else:
+                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
+                            
+                            case common.GameEventType.START_GAME_SECOND_APPROVE:
+                                if game.game:
+                                    if game.game.ready:
+                                        game.set_gamestate(common.GameState.GAME_MENU)
                                 
                             case _:
                                 prelogic.LOG(f"Unknown event type {etype}")
@@ -535,6 +569,10 @@ def prep_menu_data_recv_func(interval: float = 1):
 
 def set_ready(state: bool):
     if (game.game):
+        if (state == True):
+            for (l, c) in prelogic.current_ships.items():
+                if c > 0: return
+        
         game.game.ready = state
         
     if (prelogic.ready_button):
@@ -555,11 +593,89 @@ def swicth_ready():
     if (game.game):
         current = game.game.ready
         set_ready(not current)
-     
+        if (game.game.ready and game.game.opponent_ready):
+            prelogic.safesend(prelogic.ActiveConnection, messages.ask_start_game_message())
+
+def place_back_ship():
+    if (prelogic.holding_ship):
+        btn_other_idx = None
+        for i, b in enumerate(prelogic.current_ships_buttons):
+            if b.add[1] == prelogic.holding_ship:
+                btn_other_idx = i
+                break
+        if (btn_other_idx == None):
+            prelogic.LOG(f"Cannot find button with add val {prelogic.holding_ship}")
+        else:
+            take_ship(btn_other_idx)
+
+def take_back_ship(l: int):
+    btn_other_idx = None
+    for i, b in enumerate(prelogic.current_ships_buttons):
+        if b.add[1] == l:
+            btn_other_idx = i
+            break
+        
+    if (btn_other_idx == None):
+        prelogic.LOG(f"Cannot find button with add val {prelogic.holding_ship}")
+    else:
+        take_ship(btn_other_idx)
+
+def take_ship(btn_idx: int):
+    btn = prelogic.current_ships_buttons[btn_idx]
+    l: int = btn.add[1]
+    cnt = prelogic.current_ships[l]
+    if l == prelogic.holding_ship:
+        prelogic.current_ships[l] = cnt+1
+        prelogic.holding_ship = 0
+    elif (cnt>0):
+        if (prelogic.holding_ship):
+            place_back_ship()
+        prelogic.current_ships[l] = cnt-1
+        prelogic.holding_ship = l
+    btn.set_text(f"{l}-deck: {prelogic.current_ships[l]}")
+
+def place_map_ship() -> bool:
+    if (game.game == None):
+        return False
+    if (prelogic.holding_ship == 0): 
+        return False
+    (ix, iy) = prelogic.editmap_mouse_ipos
+    
+    if not game.canPlaceShip(game.game, game.game.editmap, prelogic.holding_ship, ix, iy, prelogic.holding_orientation):
+        return False
+    
+    game.placeShip(game.game, game.game.editmap, prelogic.holding_ship, ix, iy, prelogic.holding_orientation)
+    prelogic.holding_ship = 0
+    
+    return True
+
+def autoplace():
+    if (not game.game):
+        return
+    place_back_ship()
+    remaining_ships = sorted(prelogic.current_ships.items(), reverse=True)
+    for (l, c) in remaining_ships:
+        for _ in range(c):
+            tries = 0
+            while tries < 20:
+                ix = random.randint(0, 9)
+                iy = random.randint(0, 9)
+                orient = random.randint(0, 1)
+                if (game.canPlaceShip(game.game, game.game.editmap, l, ix, iy, orient)):
+                    game.placeShip(game.game, game.game.editmap, l, ix, iy, orient)
+                    take_back_ship(l)
+                    prelogic.holding_ship = 0
+                    # prelogic.current_ships[l] -= 1
+                    break
+                tries += 1
 
 def preparing_menu_init():
     common.change_window_size((850,600))
+
     game.game = game.GameClass()
+
+    prelogic.current_ships = game.SHIPS_COUNT.copy()
+    
     if (prelogic.ActiveConnection == None):
         game.gamestate = common.GameState.MAIN_MENU
         return
@@ -571,7 +687,7 @@ def preparing_menu_init():
     conn_check_task = task.ThreadTask(connection_check_func)
     conn_check_task()
     
-    data_rcv_task = task.ThreadTask(prep_menu_data_recv_func)
+    data_rcv_task = task.ThreadTask(prep_menu_game_menu_data_recv_func)
     data_rcv_task()
     
     
@@ -579,15 +695,45 @@ def preparing_menu_init():
     prelogic.editmap_tilesize = 45
     prelogic.editmap_size = prelogic.editmap_tilesize*10
     
+    prelogic.current_ships_buttons.clear()
+    prelogic.holding_ship = 0
+    curr_ships = sorted(prelogic.current_ships.items())
+    for i, (l, c) in enumerate(curr_ships):
+        btn = ui.ButtonInteractive(
+            text= f"{l}-deck: {c}",\
+            position= (0,0),
+            callback= task.BasicTask(take_ship, i),
+            font=ui.Font30,
+            add=(i, l)
+        )
+        btn.position = (
+            prelogic.editmap_pos[0] + prelogic.editmap_size + 20,
+            prelogic.editmap_pos[1] + i*(20+btn.size_y)
+        )
+        prelogic.current_ships_buttons.append(btn)
+        ui.active_buttons.append(btn)
+        
+    return_button = ui.ButtonInteractive(
+        text="Return",
+        position= (0,0),
+        callback= task.BasicTask(game.set_gamestate, game.last_gamestate),
+        font=ui.Font30,
+        backcolor=(230,230,230)
+    )
+    return_button.position = (
+        prelogic.editmap_pos[0],
+        prelogic.editmap_pos[1] + prelogic.editmap_size + 10
+    )
+    ui.active_buttons.append(return_button)
     
     autoplace_button = ui.ButtonInteractive(
         text="Automatic placement",
         position= (0,0),
-        callback= task.BasicTask(print, "Not implemented yet"),
+        callback= autoplace,
         font=ui.Font30,
         backcolor=(230,230,230)
     )
-    autoplace_button.position = (prelogic.editmap_pos[0] + (prelogic.editmap_size-autoplace_button.size_x)/2,
+    autoplace_button.position = (prelogic.editmap_pos[0] + prelogic.editmap_size-autoplace_button.size_x,
                                  prelogic.editmap_pos[1] + prelogic.editmap_size + 10)
     ui.active_buttons.append(autoplace_button)
     
@@ -625,12 +771,35 @@ def preparing_menu_init():
 def preparing_menu_update():
     prelogic.editmap_mouse_ipos = ((common.mouse_pos[0]-prelogic.editmap_pos[0])//prelogic.editmap_tilesize, 
                                    (common.mouse_pos[1]-prelogic.editmap_pos[1])//prelogic.editmap_tilesize)
+    
+    if (common.mouse_wheel_down or common.mouse_wheel_up):
+        prelogic.holding_orientation = int(not prelogic.holding_orientation)
+    
+    if (common.mouse_button_down):
+        if (prelogic.holding_ship):
+            if common.inrange(prelogic.editmap_mouse_ipos[0], 0, 9) and common.inrange(prelogic.editmap_mouse_ipos[1], 0, 9):
+                if not place_map_ship():
+                    place_back_ship()
+            else:
+                place_back_ship()
+    
+        elif common.inrange(prelogic.editmap_mouse_ipos[0], 0, 9) and common.inrange(prelogic.editmap_mouse_ipos[1], 0, 9):
+            if (game.game):
+                idx = game.selectShip(game.game, game.game.editmap, prelogic.editmap_mouse_ipos[0], prelogic.editmap_mouse_ipos[1])
+                if idx!=-1:
+                    (l, (_, _), o) = game.removeShip(game.game, game.game.editmap, idx)
+                    prelogic.holding_ship = l
+                    prelogic.holding_orientation = o
+                    set_ready(False)
+
         
 def preparing_menu_deinit():
     prelogic.ready_button = None
+    prelogic.current_ships_buttons.clear()
 
 def game_menu_init():
-    pass
+    common.change_window_size((1000,600))
+    prelogic.LOG("game menu: Not implemented yet")
 def game_menu_update():
     pass
 def game_menu_deinit():

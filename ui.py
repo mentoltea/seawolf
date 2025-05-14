@@ -179,7 +179,7 @@ class ButtonInteractive(Label):
     def click_check(self, x: float, y: float):
         if (common.inrange(x, self.position[0], self.position[0] + self.size_x) and common.inrange(y, self.position[1], self.position[1] + self.size_y)):
             self.avtivate()
-            common.mouse_clicked = False
+            common.mouse_button_up = False
             # print("click button")
             return True
         return False

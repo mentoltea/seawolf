@@ -118,6 +118,45 @@ def unready_message() -> str:
         }
     ) + TCP_DELIMITER
 
+def ask_start_game_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.ASK_START_GAME}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+def start_game_decl_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.START_GAME_DECLINE}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+def start_game_appr_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.START_GAME_APPROVE}"
+            }
+        }
+    ) + TCP_DELIMITER
+    
+def start_game_sappr_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.START_GAME_SECOND_APPROVE}"
+            }
+        }
+    ) + TCP_DELIMITER
 
 
 

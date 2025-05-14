@@ -41,7 +41,10 @@ class GameEventType:
     UNREADY = 'UNREADY'
     ASK_READY = 'ASK_READY'
     
-    START_GAME = 'START_GAME'
+    ASK_START_GAME = 'ASK_START_GAME'
+    START_GAME_DECLINE = 'START_GAME_DECLINE'
+    START_GAME_APPROVE = 'START_GAME_APPROVE'
+    START_GAME_SECOND_APPROVE = 'START_GAME_SECOND_APPROVE'
     QUIT_GAME = 'QUIT_GAME' # leave before the end
     END_GAME = 'END_GAME'
     
@@ -73,7 +76,10 @@ window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
 
 EVENTS: list[pygame.event.Event] = []
 
-mouse_clicked: bool = False
+mouse_button_down: bool = False
+mouse_button_up: bool = False
+mouse_wheel_up: bool = False
+mouse_wheel_down: bool = False
 mouse_pos: tuple[int, int] = (0,0)
 mouse_button: int | None = None
 
