@@ -623,6 +623,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                         case _:
                                             prelogic.LOG(move + " " + str(cell))
                                             prelogic.safesend( prelogic.ActiveConnection, messages.bad_move_message(move))
+                                    left_labels_update()
                             
                             case common.GameEventType.MOVE_EMPTY:
                                 if (game.gamestate != common.GameState.GAME_MENU): continue
@@ -649,6 +650,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 (ix, iy) = game.pos2xy(move)
                                 if game.game:
                                     game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.KILLED)
+                                left_labels_update()
                                 if (check_win() != 0):
                                     end_game()
                                 set_turn(0)
@@ -938,6 +940,18 @@ def end_game():
         )
     )
     
+def left_labels_update():
+    if (not game.game): return
+    en = len(game.game.my_ships) - len(game.game.enemy_ships)
+    me = len(game.game.my_ships)
+    for s in game.game.my_ships:
+        if game.game.mymap[s[1][1]][s[1][0]] == game.CellType.KILLED:
+            me -= 1
+    
+    if (prelogic.my_left_label):
+        prelogic.my_left_label.set_text(f"left: {me}")
+    if (prelogic.enemy_left_label):
+        prelogic.enemy_left_label.set_text(f"left: {en}")
     
 
 # 1 - my win
@@ -1054,6 +1068,30 @@ def game_menu_init():
         font=ui.Font32
     )
     ui.active_labels.append(prelogic.turn_label)
+    
+    prelogic.my_left_label = ui.Label(
+        text = "left:",
+        position=(0,0),
+        font= ui.Font36
+    )
+    prelogic.my_left_label.position = (
+        (suurender_button.position[0] - prelogic.my_left_label.size_x)/2,
+        suurender_button.position[1] 
+    )
+    ui.active_labels.append(prelogic.my_left_label)
+    
+    prelogic.enemy_left_label = ui.Label(
+        text = "left:",
+        position=(0,0),
+        font= ui.Font36
+    )
+    prelogic.enemy_left_label.position = (
+        (suurender_button.position[0] + suurender_button.size_x + common.WIN_X - prelogic.enemy_left_label.size_x)/2,
+        suurender_button.position[1] 
+    )
+    ui.active_labels.append(prelogic.enemy_left_label)
+    
+    left_labels_update()
     
     if prelogic.ActiveConnection.is_server:
         game.game.turn = 0

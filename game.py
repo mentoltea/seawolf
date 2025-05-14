@@ -182,7 +182,7 @@ def removeShip(gm: GameClass, map: list[list[int]],  idx: int) -> tuple[ int, tu
     (l, (ix, iy), orient) = ship
     cx, cy = ix, iy
     for _ in range(l):
-        map[cy][cx] = CellType.EMPTY
+        map[cy][cx] = CellType.HIDDEN
         if (orient == 0):
             cx += 1
         else:

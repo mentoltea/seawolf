@@ -1,9 +1,9 @@
 import game # type: ignore
-
 from game import ui
 from game import connection
 from game import common # type: ignore
 from common import task
+from common import pygame
 import time
 # connection = game.connection
 # common = game.common
@@ -103,3 +103,34 @@ enemymap_size = enemymap_tilesize*10
 enemymap_mouse_ipos = (0,0)
 
 turn_label: ui.Label | None = None
+my_left_label: ui.Label | None = None
+enemy_left_label: ui.Label | None = None
+
+deck_assets: list[ tuple[ pygame.Surface, pygame.Surface ] ] = []
+deck_assets_loaded: bool = False
+
+def load_assets():
+    global deck_assets, deck_assets_loaded
+    try:
+        deck1_h = pygame.image.load("assets/decks/1-deck.png")
+        deck1_v = pygame.transform.rotate(deck1_h, 90)
+        
+        deck2_h = pygame.image.load("assets/decks/2-deck.png")
+        deck2_v = pygame.transform.rotate(deck2_h, 90)
+        
+        deck3_h = pygame.image.load("assets/decks/3-deck.png")
+        deck3_v = pygame.transform.rotate(deck3_h, 90)
+        
+        deck4_h = pygame.image.load("assets/decks/4-deck.png")
+        deck4_v = pygame.transform.rotate(deck4_h, 90)
+        
+        deck_assets.append( (deck1_h, deck1_v) )
+        deck_assets.append( (deck2_h, deck2_v) )
+        deck_assets.append( (deck3_h, deck3_v) )
+        deck_assets.append( (deck4_h, deck4_v) )
+        deck_assets_loaded = True
+    except:
+        deck_assets.clear()
+        deck_assets_loaded = False
+
+load_assets()

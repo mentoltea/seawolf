@@ -5,6 +5,7 @@ from prelogic import ui
 from prelogic import common
 from prelogic import game
 from common import pygame
+import random
 # import prelogic
 # import pygame
 # import common
@@ -14,7 +15,7 @@ HIDDEN = (220, 220, 200)
 EMPTY = (200, 200, 230)
 BOAT = ui.LIGHTGRAY
 SHOT = ui.LIGHTRED
-KILLED = ui.RED
+KILLED = (110, 60, 60)
 
 
 
@@ -52,7 +53,7 @@ def main_menu_window_update():
 def choose_mode_menu_window_update():
     pass
 
-def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap: list[list[int]]):
+def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap: list[list[int]], ships: list[tuple[ int, tuple[int,int], int]]):
     font = ui.Font24
     for iy in range(10):
         letter = str(iy+1)
@@ -100,22 +101,71 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
                 clr = tuple(map(lambda v: max(0, v-25), clr))
             pygame.draw.rect(surf, clr, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize))
             pygame.draw.rect(surf, ui.BLACK, pygame.Rect(x + ix*tilesize, y + iy*tilesize, tilesize, tilesize), 1)
+    
+    for (l, (ix,iy), o) in ships:
+        img: pygame.Surface = prelogic.deck_assets[l-1][o]
+        (sizex, sizey) = img.get_size()
+        kk = 0.94
+        k = l * tilesize/max(sizex, sizey) * kk
+        res_img = pygame.transform.scale(img, (k*sizex, k*sizey))
+        (sizex, sizey) = (k*sizex, k*sizey)
+        if (o==0):
+            common.window.blit(res_img,
+                            (x + ix*tilesize + (1-kk)*tilesize/2, 
+                                y + iy*tilesize + (1-kk)*tilesize, ))
+        else: 
+            common.window.blit(res_img,
+                            (x + ix*tilesize + (1-kk)*tilesize, 
+                                y + iy*tilesize + (1-kk)*tilesize/2, ))
+    
+    for iy in range(10):
+        for ix in range(10):
+            if gamemap[iy][ix] == game.CellType.SHOT:
+                k = 7
+                p1 = (x + ix*tilesize + random.random() * tilesize/k, y + iy*tilesize + random.random() * tilesize/k)
+                p2 = (x + ix*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k, y + iy*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k)
+                pygame.draw.line(common.window, ui.RED, p1, p2, 3)
+                
+                p1 = (x + ix*tilesize + random.random() * tilesize/k, y + iy*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k)
+                p2 = (x + ix*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k, y + iy*tilesize + random.random() * tilesize/k)
+                pygame.draw.line(common.window, ui.RED, p1, p2, 3)
 
 def preparing_menu_window_update():
     if (game.game):
-        draw_gamemap(common.window, prelogic.editmap_pos[0], prelogic.editmap_pos[1], prelogic.editmap_tilesize, game.game.editmap)
+        draw_gamemap(common.window, prelogic.editmap_pos[0], prelogic.editmap_pos[1], prelogic.editmap_tilesize, game.game.editmap, game.game.edit_ships)
     
     if (prelogic.holding_ship):
-        if prelogic.holding_orientation==0:
-            pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 20, 10))
+        if (not prelogic.deck_assets_loaded):
+            if prelogic.holding_orientation==0:
+                pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 20, 10))
+            else:
+                pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 10, 20))
         else:
-            pygame.draw.rect(common.window, (255,0,0), (common.mouse_pos[0], common.mouse_pos[1], 10, 20))
+            tilesize = prelogic.editmap_tilesize
+            img: pygame.Surface = prelogic.deck_assets[prelogic.holding_ship-1][prelogic.holding_orientation]
+            (sizex, sizey) = img.get_size()
+            k = prelogic.holding_ship * tilesize/max(sizex, sizey) * 0.94
+            res_img = pygame.transform.scale(img, (k*sizex, k*sizey))
+            (sizex, sizey) = (k*sizex, k*sizey)
+            common.window.blit(res_img, (common.mouse_pos[0]-tilesize/2, common.mouse_pos[1]-tilesize/2))
+    if (prelogic.deck_assets_loaded):
+        # tilesize = prelogic.editmap_tilesize
+        for btn in prelogic.current_ships_buttons:
+            (_, l) = btn.add
+            l = int(l)
+            img: pygame.Surface = prelogic.deck_assets[l-1][0]
+            (sizex, sizey) = img.get_size()
+            k = btn.size_y/sizey * 0.92
+            res_img = pygame.transform.scale(img, (k*sizex, k*sizey))
+            (sizex, sizey) = (k*sizex, k*sizey)
+            common.window.blit(res_img, (btn.position[0] + btn.size_x + 20, btn.position[1] + (btn.size_y - sizey)/2))
             
+    
 
 def game_menu_window_update():
     if (game.game):
-        draw_gamemap(common.window, *prelogic.mymap_pos, prelogic.mymap_tilesize, game.game.mymap)
-        draw_gamemap(common.window, *prelogic.enemymap_pos, prelogic.enemymap_tilesize, game.game.enemymap)
+        draw_gamemap(common.window, *prelogic.mymap_pos, prelogic.mymap_tilesize, game.game.mymap, game.game.my_ships)
+        draw_gamemap(common.window, *prelogic.enemymap_pos, prelogic.enemymap_tilesize, game.game.enemymap, game.game.enemy_ships)
 
 def window_update():
     common.wn.fill((0,0,0))
