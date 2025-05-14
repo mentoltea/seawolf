@@ -9,6 +9,14 @@ from common import pygame
 # import pygame
 # import common
 
+UNKNOWN = ui.WHITE
+HIDDEN = (220, 220, 200)
+EMPTY = (200, 200, 230)
+BOAT = ui.LIGHTGRAY
+SHOT = ui.LIGHTRED
+KILLED = ui.RED
+
+
 
 def get_trans(Surf : pygame.Surface, width: float, height: float, angle: float):
     return pygame.transform.rotate(pygame.transform.scale(Surf, (int(round(width)), int(round(height)))), int(round(angle)))
@@ -52,7 +60,7 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
         ui.draw_text(letter, x-size_x-5, y + iy*tilesize + (tilesize-size_y)/2, surf=surf, font=font)
     
     for ix in range(10):
-        letter = game.ALPLABET[ix].upper()
+        letter = game.ALPHABET[ix].upper()
         (size_x, size_y) = font.size(letter) # type: ignore
         ui.draw_text(letter, x + ix*tilesize + (tilesize-size_x)/2, y - size_y - 5, surf=surf, font=font)
     
@@ -74,20 +82,18 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
             clr = ui.WHITE
             match (gamemap[iy][ix]):
                 # 0 - unknown cell
-                case 0:
-                    clr = ui.WHITE
-                # 1 - empty cell
-                case 1:
-                    clr = ui.EMPTY
-                # 2 - boat cell, not shot
-                case 2:
-                    clr = ui.LIGHTGRAY
-                # 3 - boat cell, shot
-                case 3:
-                    clr = ui.LIGHTRED
-                # 4 - boat cell, killed
-                case 4:
-                    clr = ui.RED
+                case game.CellType.UNKNOWN:
+                    clr = UNKNOWN
+                case game.CellType.HIDDEN:
+                    clr = HIDDEN
+                case game.CellType.EMPTY:
+                    clr = EMPTY
+                case game.CellType.BOAT:
+                    clr = BOAT
+                case game.CellType.SHOT:
+                    clr = SHOT
+                case game.CellType.KILLED:
+                    clr = KILLED
                 case _:
                     pass
             if ((ix, iy) == mouse_ipos or (ix,iy) in holding_pts):
@@ -107,7 +113,9 @@ def preparing_menu_window_update():
             
 
 def game_menu_window_update():
-    pass
+    if (game.game):
+        draw_gamemap(common.window, *prelogic.mymap_pos, prelogic.mymap_tilesize, game.game.mymap)
+        draw_gamemap(common.window, *prelogic.enemymap_pos, prelogic.enemymap_tilesize, game.game.enemymap)
 
 def window_update():
     common.wn.fill((0,0,0))

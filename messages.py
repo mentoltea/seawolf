@@ -158,6 +158,81 @@ def start_game_sappr_message() -> str:
         }
     ) + TCP_DELIMITER
 
+def surrender_game_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.SURRENDER_GAME}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+
+def end_game_message() -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.END_GAME}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+def make_move_message(move: str) -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.MAKE_MOVE}",
+                "move" : f"{move}"
+            }
+        }
+    ) + TCP_DELIMITER
+
+def move_empty_message(move: str) -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.MOVE_EMPTY}",
+                "move" : f"{move}"
+            }
+        }
+    ) + TCP_DELIMITER
+    
+def move_shot_message(move: str) -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.MOVE_SHOT}",
+                "move" : f"{move}"
+            }
+        }
+    ) + TCP_DELIMITER
+    
+def move_killed_message(move: str) -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.MOVE_KILLED}",
+                "move" : f"{move}"
+            }
+        }
+    ) + TCP_DELIMITER
+    
+def bad_move_message(move: str) -> str:
+    return common.json.dumps(
+        {
+            "type" : f"{common.MessageType.GAME_EVENT}",
+            "event" : {
+                "type" : f"{common.GameEventType.BAD_MOVE}",
+                "move" : f"{move}"
+            }
+        }
+    ) + TCP_DELIMITER
 
 
 
@@ -165,11 +240,8 @@ def start_game_sappr_message() -> str:
 
 
 
-
-
-
-
-
+# --------------------------------
+# Abandoned ->
 
 def message_is_check_conn(data: str | bytes | None) -> bool:
     if data == None:

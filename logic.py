@@ -288,6 +288,9 @@ def main_menu_init():
         prelogic.TCP.stop()
         prelogic.TCP = None
     
+    connection.EXPECTED_HOSTS.clear()
+    prelogic.sent_requests.clear()
+    
     common.change_window_size((720, 180))
     
     my_name_label = ui.Label(
@@ -411,8 +414,8 @@ def main_menu_update():
         
         if (common.mouse_button_up 
             and common.mouse_button == 1
-            and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x) 
-            and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y)):
+            and common.inrange(common.mouse_pos[0], button.position[0], button.position[0] + button.size_x -1) 
+            and common.inrange(common.mouse_pos[1], button.position[1], button.position[1] + button.size_y -1)):
             button.avtivate()
             
 def main_menu_deinit():
@@ -470,19 +473,19 @@ def connection_check_func(sec_per_check: float = 3):
     while (prelogic.ActiveConnection != None and prelogic.ActiveConnection.connected):
         if (time.time() - sec_per_check >= prelogic.LastCheckedConnection):
             if not prelogic.safesend(prelogic.ActiveConnection, messages.check_conn_message()):
-                game.set_gamestate(common.GameState.MAIN_MENU)
+                if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
                 return
             if not prelogic.ActiveConnection.connected:
-                game.set_gamestate(common.GameState.MAIN_MENU)
+                if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
                 return
             prelogic.LastCheckedConnection = time.time()
         time.sleep(sec_per_check)
-    game.set_gamestate(common.GameState.MAIN_MENU)
+    if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
 
 def prep_menu_game_menu_data_recv_func(interval: float = 1):
     while (game.gamestate in [common.GameState.PREPARING_MENU, common.GameState.GAME_MENU]):
         if (prelogic.ActiveConnection == None or prelogic.ActiveConnection.connected == False):
-            game.set_gamestate(common.GameState.MAIN_MENU)
+            if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
             return
         
         rcv = prelogic.ActiveConnection.recv(interval/2)
@@ -506,12 +509,16 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                         etype: str = event["type"]
                         match (etype):
                             case common.GameEventType.READY:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if (game.game):
                                     game.game.opponent_ready = True
                                 if (prelogic.opponent_ready_label):
                                     prelogic.opponent_ready_label.set_text("Opponent Is Ready")
                                     prelogic.opponent_ready_label.fontcolor = ui.LIGHTGREEN
                             case common.GameEventType.UNREADY:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if (game.game):
                                     game.game.opponent_ready = False
                                 if (prelogic.opponent_ready_label):
@@ -519,6 +526,8 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                     prelogic.opponent_ready_label.fontcolor = ui.LIGHTRED
                             
                             case common.GameEventType.ASK_START_GAME:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if (game.game):
                                     
                                     game.game.opponent_ready = True
@@ -532,6 +541,8 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                         prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
                             
                             case common.GameEventType.START_GAME_DECLINE:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if (game.game):
                                     game.game.opponent_ready = False
                                 if (prelogic.opponent_ready_label):
@@ -540,6 +551,8 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 # prelogic.INFO("Opponent is not ready yet")
                                 
                             case common.GameEventType.START_GAME_APPROVE:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if game.game:
                                     if game.game.ready:
                                         prelogic.safesend( prelogic.ActiveConnection, messages.start_game_sappr_message())
@@ -548,10 +561,106 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                         prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
                             
                             case common.GameEventType.START_GAME_SECOND_APPROVE:
+                                if (game.gamestate != common.GameState.PREPARING_MENU): continue
+                                
                                 if game.game:
                                     if game.game.ready:
                                         game.set_gamestate(common.GameState.GAME_MENU)
+                            
+                            # ------------------------------------------------------------------
+                            
+                            case common.GameEventType.SURRENDER_GAME:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
                                 
+                                prelogic.looking_game_results = True
+                                prelogic.ActiveConnection.connected = False
+                                
+                                ui.dialogs.append(
+                                    ui.Dialog(
+                                        text= "You won - Opponent surrendered",
+                                        font=ui.Font36,
+                                        button_left= ui.ButtonInteractive(
+                                            text= "Go back",
+                                            position=(0,0),
+                                            callback= task.BasicTask(game.set_gamestate, common.GameState.MAIN_MENU),
+                                            font = ui.Font30
+                                        )
+                                    )
+                                )
+                            
+                            case common.GameEventType.END_GAME:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+
+                                end_game()
+                            
+                            # ------------------------------------------------------------------
+                            
+                            case common.GameEventType.MAKE_MOVE:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+                                
+                                move: str = event["move"]
+                                (ix, iy) = game.pos2xy(move)
+                                if (game.game):
+                                    cell = game.game.mymap[iy][ix]
+                                    match cell:
+                                        case game.CellType.HIDDEN:
+                                            prelogic.safesend( prelogic.ActiveConnection, messages.move_empty_message(move))
+                                            game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.EMPTY)
+                                            set_turn(0)
+                                        
+                                        case game.CellType.BOAT:
+                                            game.game.mymap[iy][ix] = game.CellType.SHOT
+                                            if (game.isKilled(game.game, game.game.mymap, ix, iy)):
+                                                prelogic.safesend( prelogic.ActiveConnection, messages.move_killed_message(move))
+                                                game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.KILLED)
+                                            else:
+                                                prelogic.safesend( prelogic.ActiveConnection, messages.move_shot_message(move))
+                                                game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.SHOT)
+                                            if (check_win() != 0):
+                                                end_game()
+                                            set_turn(1)
+                                        
+                                        case _:
+                                            prelogic.LOG(move + " " + str(cell))
+                                            prelogic.safesend( prelogic.ActiveConnection, messages.bad_move_message(move))
+                            
+                            case common.GameEventType.MOVE_EMPTY:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+                                
+                                move: str = event["move"]
+                                (ix, iy) = game.pos2xy(move)
+                                if game.game:
+                                    game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.EMPTY)
+                                set_turn(1)
+                                
+                            case common.GameEventType.MOVE_SHOT:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+                                
+                                move: str = event["move"]
+                                (ix, iy) = game.pos2xy(move)
+                                if game.game:
+                                    game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.SHOT)
+                                set_turn(0)
+                            
+                            case common.GameEventType.MOVE_KILLED:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+                                
+                                move: str = event["move"]
+                                (ix, iy) = game.pos2xy(move)
+                                if game.game:
+                                    game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.KILLED)
+                                if (check_win() != 0):
+                                    end_game()
+                                set_turn(0)
+                            
+                            case common.GameEventType.BAD_MOVE:
+                                if (game.gamestate != common.GameState.GAME_MENU): continue
+                                
+                                prelogic.INFO("Bad move")
+                                prelogic.LOG("Bad move")
+                                set_turn(0)
+                            
+                            
                             case _:
                                 prelogic.LOG(f"Unknown event type {etype}")
                         
@@ -570,7 +679,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
 def set_ready(state: bool):
     if (game.game):
         if (state == True):
-            for (l, c) in prelogic.current_ships.items():
+            for (_, c) in prelogic.current_ships.items():
                 if c > 0: return
         
         game.game.ready = state
@@ -673,6 +782,7 @@ def preparing_menu_init():
     common.change_window_size((850,600))
 
     game.game = game.GameClass()
+    prelogic.looking_game_results = False
 
     prelogic.current_ships = game.SHIPS_COUNT.copy()
     
@@ -777,7 +887,7 @@ def preparing_menu_update():
     
     if (common.mouse_button_down):
         if (prelogic.holding_ship):
-            if common.inrange(prelogic.editmap_mouse_ipos[0], 0, 9) and common.inrange(prelogic.editmap_mouse_ipos[1], 0, 9):
+            if common.inrange(prelogic.editmap_mouse_ipos[0], 0, 9) and common.inrange(prelogic.editmap_mouse_ipos[1], 0, 9) and common.mouse_button == 1:
                 if not place_map_ship():
                     place_back_ship()
             else:
@@ -785,7 +895,7 @@ def preparing_menu_update():
     
         elif common.inrange(prelogic.editmap_mouse_ipos[0], 0, 9) and common.inrange(prelogic.editmap_mouse_ipos[1], 0, 9):
             if (game.game):
-                idx = game.selectShip(game.game, game.game.editmap, prelogic.editmap_mouse_ipos[0], prelogic.editmap_mouse_ipos[1])
+                idx = game.selectShipIdx(game.game, game.game.edit_ships, game.game.editmap, prelogic.editmap_mouse_ipos[0], prelogic.editmap_mouse_ipos[1])
                 if idx!=-1:
                     (l, (_, _), o) = game.removeShip(game.game, game.game.editmap, idx)
                     prelogic.holding_ship = l
@@ -795,15 +905,176 @@ def preparing_menu_update():
         
 def preparing_menu_deinit():
     prelogic.ready_button = None
+    prelogic.opponent_ready_label = None
+    prelogic.current_ships.clear()
     prelogic.current_ships_buttons.clear()
 
+def surrender():
+    prelogic.safesend(prelogic.ActiveConnection, messages.surrender_game_message())
+    game.set_gamestate(common.GameState.MAIN_MENU)
+
+def end_game():
+    prelogic.looking_game_results = True
+    
+    prelogic.safesend(prelogic.ActiveConnection, messages.end_game_message())
+    if (prelogic.ActiveConnection): prelogic.ActiveConnection.connected = False
+    
+    w = check_win()
+    
+    text = "Game ended"
+    if (w == 1): text = "You won!"
+    elif (w==-1): text = "You lost :("
+    
+    ui.dialogs.append(
+        ui.Dialog(
+            text= text,
+            font=ui.Font36,
+            button_left= ui.ButtonInteractive(
+                text= "Go back",
+                position=(0,0),
+                callback= task.BasicTask(game.set_gamestate, common.GameState.MAIN_MENU),
+                font = ui.Font30
+            )
+        )
+    )
+    
+    
+
+# 1 - my win
+# -1 - enemy win
+# 0 - still playing
+def check_win() -> int:
+    if (not game.game): return 0
+    if (len(game.game.enemy_ships) == len(game.game.my_ships)):
+        return 1
+    my_killed = 0
+    for s in game.game.my_ships:
+        if game.game.mymap[s[1][1]][s[1][0]] == game.CellType.KILLED:
+            my_killed += 1
+    if my_killed == len(game.game.my_ships):
+        return -1
+    return 0
+
+def set_turn(turn: int):
+    if (not prelogic.turn_label): return
+    match turn:
+        case 0:
+            prelogic.turn_label.set_text("My turn")
+            prelogic.turn_label.fontcolor = ui.LIGHTGREEN
+        case 1:
+            prelogic.turn_label.set_text("Enemy turn")
+            prelogic.turn_label.fontcolor = ui.LIGHTRED
+        case 2:
+            prelogic.turn_label.set_text("Wait...")
+            prelogic.turn_label.fontcolor = ui.LIGHTGRAY
+        case _:
+            prelogic.LOG(f"Unknown turn - {turn}")
+            turn = 2
+            
+    if (game.game):
+        game.game.turn = turn
+
+def make_move(ix: int, iy: int):
+    if (not game.game): return
+    if game.game.turn != 0: return
+    if (game.game.enemymap[iy][ix] != game.CellType.UNKNOWN):
+        prelogic.INFO("Bad move - the cell is already opened")
+    
+    prelogic.safesend(prelogic.ActiveConnection, messages.make_move_message(game.xy2pos(ix, iy)))
+    # waiting
+    set_turn(2)
+        
 def game_menu_init():
-    common.change_window_size((1000,600))
-    prelogic.LOG("game menu: Not implemented yet")
+    common.change_window_size((1080,720))
+    if (not prelogic.ActiveConnection):
+        return
+    if (not game.game):
+        return
+    prelogic.looking_game_results = False
+    if (game.game):
+        game.game.mymap = game.game.editmap.copy()
+        game.game.my_ships = game.game.edit_ships.copy()
+        
+        game.game.enemymap = game.empty_map(game.CellType.UNKNOWN)
+        game.game.enemy_ships = []
+    
+    prelogic.mymap_tilesize = 45
+    prelogic.mymap_size = prelogic.mymap_tilesize*10
+    prelogic.mymap_mouse_ipos = (0,0)
+    
+    prelogic.enemymap_tilesize = 45
+    prelogic.enemymap_size = prelogic.enemymap_tilesize*10
+    prelogic.enemymap_mouse_ipos = (0,0)
+    
+    my_map_label = ui.Label(
+        text="My map:",
+        position=(0,0),
+        font=ui.Font30
+    )
+    my_map_label.position = (
+        40 + (prelogic.mymap_size - my_map_label.size_x)/2,
+        20
+    )
+    ui.active_labels.append(my_map_label)
+    
+    enemy_map_label = ui.Label(
+        text="Enemy map:",
+        position=(0,0),
+        font=ui.Font30
+    )
+    enemy_map_label.position = (
+        common.WIN_X - 40 - (enemy_map_label.size_x + prelogic.enemymap_size )/2,
+        20
+    )
+    ui.active_labels.append(enemy_map_label)
+    
+    
+    prelogic.mymap_pos = (40, my_map_label.position[1] + 80)
+    prelogic.enemymap_pos = (common.WIN_X - 40 - prelogic.enemymap_size, enemy_map_label.position[1] + 80)
+
+    
+    suurender_button = ui.ButtonInteractive(
+        text="Surrender",
+        position=(0,0),
+        callback= surrender,
+        font = ui.Font30
+    )
+    suurender_button.position = (
+        (prelogic.mymap_pos[0] + prelogic.mymap_size + prelogic.enemymap_pos[0] - suurender_button.size_x)/2,
+        prelogic.mymap_pos[1]  + prelogic.mymap_size + 40
+    )
+    ui.active_buttons.append(suurender_button)
+    
+    prelogic.turn_label = ui.Label(
+        text="", 
+        position= (
+            (prelogic.mymap_pos[0] + prelogic.mymap_size + prelogic.enemymap_pos[0])/2,
+            my_map_label.position[1]
+        ),
+        font=ui.Font32
+    )
+    ui.active_labels.append(prelogic.turn_label)
+    
+    if prelogic.ActiveConnection.is_server:
+        game.game.turn = 0
+    else:
+        game.game.turn = 1
+    
+    if (game.game): set_turn(game.game.turn)
+    
 def game_menu_update():
-    pass
+    if common.mouse_button_down and common.mouse_button==1:
+        if game.game and game.game.turn==0:
+            mouse_ipos = (
+                (common.mouse_pos[0]-prelogic.enemymap_pos[0])//prelogic.enemymap_tilesize, 
+                (common.mouse_pos[1]-prelogic.enemymap_pos[1])//prelogic.enemymap_tilesize
+            )
+            if common.inrange(mouse_ipos[0], 0, 9) and common.inrange(mouse_ipos[1], 0, 9):
+                make_move(mouse_ipos[0], mouse_ipos[1])
+
 def game_menu_deinit():
-    pass
+    prelogic.looking_game_results = False
+    prelogic.turn_label = None
 
 def game_update():
     all_update()

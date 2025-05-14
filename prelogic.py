@@ -65,6 +65,7 @@ open_hosts_page = 0
 open_hosts_onepage = 4
 open_hosts_update_task: task.ThreadTask | None = None
 open_hosts_selfhost_label = None
+# ------------------
 
 # PREPARE MENU
 editmap_pos = (40, 40)
@@ -86,3 +87,19 @@ holding_ship: int = 0
 # 0 - horyzontal
 # 1 - vertical
 holding_orientation: int = 0
+# ------------------
+
+# GAME MENU
+looking_game_results: bool = False
+
+mymap_pos = (40, 40)
+mymap_tilesize = 45
+mymap_size = mymap_tilesize*10
+mymap_mouse_ipos = (0,0)
+
+enemymap_pos = (common.WIN_X - 40, 40)
+enemymap_tilesize = 45
+enemymap_size = enemymap_tilesize*10
+enemymap_mouse_ipos = (0,0)
+
+turn_label: ui.Label | None = None

@@ -43,8 +43,6 @@ BLUE = (0, 0, 255)
 LIGHTBLUE = (50, 50, 150)
 VERYLIGHTBLUE = (35, 35, 210)
 
-EMPTY = (220, 220, 200)
-
 
 def color_inverse(color: tuple[int,int,int]):
     return (255-color[0], 255-color[1], 255-color[2])
@@ -194,10 +192,12 @@ class Dialog:
                  button_left: ButtonInteractive | None = None,
                  button_right: ButtonInteractive | None = None,
                  timeout : float = float('inf'),
-                 on_timeout_call : typing.Callable[[], None] | None = None):
+                 on_timeout_call : typing.Callable[[], None] | None = None,
+                 font: pygame.font.Font = DefaultFont):
         self.label = Label(text=text, 
                            position=(0,0), 
-                           center=True)
+                           center=True,
+                           font= font)
         
         self.backcolor = tuple(map(lambda v: max(0, v), list(self.label.backcolor)))
         

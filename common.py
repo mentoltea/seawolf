@@ -45,7 +45,8 @@ class GameEventType:
     START_GAME_DECLINE = 'START_GAME_DECLINE'
     START_GAME_APPROVE = 'START_GAME_APPROVE'
     START_GAME_SECOND_APPROVE = 'START_GAME_SECOND_APPROVE'
-    QUIT_GAME = 'QUIT_GAME' # leave before the end
+    
+    SURRENDER_GAME = 'SURRENDER_GAME' # leave before the end
     END_GAME = 'END_GAME'
     
     MAKE_MOVE = 'MAKE_MOVE'
@@ -53,6 +54,7 @@ class GameEventType:
     MOVE_EMPTY = 'MOVE_EMPTY'
     MOVE_SHOT = 'MOVE_SHOT'
     MOVE_KILLED = 'MOVE_KILLED'
+    BAD_MOVE = 'BAD_MOVE'
 
 class GameState:
     CHOOSE_MODE_MENU = 'CHOOSE_MODE_MENU'
