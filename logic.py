@@ -34,14 +34,14 @@ from prelogic import task
 #             data = prelogic.TCP.recv(3*interval)
 #             if (not messages.approve_conn_message_check(data)):
 #                 break
-#             print(data)
+#             
 #         else:
 #             data = prelogic.TCP.recv(3*interval)
 #             if (messages.check_conn_message_check(data)):
 #                 prelogic.TCP.send(messages.approve_conn_message())
 #             else:
 #                 break
-#             print(data)
+#             
         
 #         shift = not shift
 #         # if connection was closed, 

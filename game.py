@@ -219,7 +219,6 @@ def set_move_enemymap(gm: GameClass, map: list[list[int]],  ix: int, iy: int, m:
     if (m != CellType.KILLED): return
     # CellType.KILLED ->
     ship = (l, (x,y), o) = selectShipS(gm, map, ix, iy)
-    print(ship)
     
     cx,cy = x,y
     for _ in range(l):
