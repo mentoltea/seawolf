@@ -55,6 +55,7 @@ TCP: connection.TCP_Sock | None = None
 ActiveConnection: connection.TCP_Sock | None = None
 LastCheckedConnection: float = time.time()
 
+return_state: str = common.GameState.CHOOSE_MODE_MENU
 
 # MAIN MENU
 sent_requests: list[str] = [] #adresses

@@ -67,7 +67,7 @@ pygame.mixer.init()
 RES_CURRENT = (WIN_X, WIN_Y)
 # os.environ['SDL_VIDEO_WINDOW_POS'] = "200,200"
 # wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
-pygame.display.set_caption("seawolf")
+# pygame.display.set_caption("seawolf")
 
 
 
@@ -103,6 +103,7 @@ def change_window_size(newsize: tuple[int,int]):
     os.environ['SDL_VIDEO_WINDOW_POS'] = f"{desc_x//2 - WIN_X//2},{desc_y//2 - WIN_Y//2}"
     
     wn = pygame.display.set_mode(RES_CURRENT, pygame.SRCALPHA, vsync=1)
+    pygame.display.set_caption(version.GAME)
     window = pygame.Surface((RES_FORM[0], RES_FORM[1]), pygame.SRCALPHA)
 
 change_window_size(RES_CURRENT)

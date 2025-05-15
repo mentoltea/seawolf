@@ -102,7 +102,7 @@ def accept_connection(username: str, addr: tuple[str,str]):
 
 def rejected_connection(username: str, addr: tuple[str,str]):
     # game.gamestate = common.GameState.MAIN_MENU
-    game.set_gamestate(common.GameState.MAIN_MENU)
+    game.set_gamestate(prelogic.return_state)
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
@@ -114,7 +114,7 @@ def rejected_connection(username: str, addr: tuple[str,str]):
 
 def reject_connection(username: str, addr: tuple[str,str]):
     # game.gamestate = common.GameState.MAIN_MENU
-    game.set_gamestate(common.GameState.MAIN_MENU)
+    game.set_gamestate(prelogic.return_state)
     if (prelogic.TCP):
         prelogic.TCP.stop()
         prelogic.TCP = None
@@ -293,6 +293,8 @@ def main_menu_init():
     
     common.change_window_size((720, 180))
     
+    prelogic.return_state = common.GameState.MAIN_MENU
+    
     my_name_label = ui.Label(
         text=f"My name: {prelogic.MYUSERNAME}",
         position=(0,0),
@@ -430,6 +432,7 @@ def main_menu_deinit():
 def choose_mode_menu_init():
     common.change_window_size((300, 200))
     
+    prelogic.return_state = common.GameState.CHOOSE_MODE_MENU
     
     singleplayer_button = ui.ButtonInteractive(
         text="Singleplayer",
@@ -473,19 +476,19 @@ def connection_check_func(sec_per_check: float = 3):
     while (prelogic.ActiveConnection != None and prelogic.ActiveConnection.connected):
         if (time.time() - sec_per_check >= prelogic.LastCheckedConnection):
             if not prelogic.safesend(prelogic.ActiveConnection, messages.check_conn_message()):
-                if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
+                if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
                 return
             if not prelogic.ActiveConnection.connected:
-                if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
+                if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
                 return
             prelogic.LastCheckedConnection = time.time()
         time.sleep(sec_per_check)
-    if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
+    if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
 
 def prep_menu_game_menu_data_recv_func(interval: float = 1):
     while (game.gamestate in [common.GameState.PREPARING_MENU, common.GameState.GAME_MENU]):
         if (prelogic.ActiveConnection == None or prelogic.ActiveConnection.connected == False):
-            if (not prelogic.looking_game_results): game.set_gamestate(common.GameState.MAIN_MENU)
+            if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
             return
         
         rcv = prelogic.ActiveConnection.recv(interval/2)
@@ -582,7 +585,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                         button_left= ui.ButtonInteractive(
                                             text= "Go back",
                                             position=(0,0),
-                                            callback= task.BasicTask(game.set_gamestate, common.GameState.MAIN_MENU),
+                                            callback= task.BasicTask(game.set_gamestate, prelogic.return_state),
                                             font = ui.Font30
                                         )
                                     )
@@ -673,7 +676,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
             except Exception as e:
                 prelogic.ERROR(str(e))
                 print(data)
-                game.set_gamestate(common.GameState.MAIN_MENU)
+                game.set_gamestate(prelogic.return_state)
                 return
 
         time.sleep(interval)
@@ -828,7 +831,7 @@ def preparing_menu_init():
     return_button = ui.ButtonInteractive(
         text="Return",
         position= (0,0),
-        callback= task.BasicTask(game.set_gamestate, game.last_gamestate),
+        callback= task.BasicTask(game.set_gamestate, prelogic.return_state),
         font=ui.Font30,
         backcolor=(230,230,230)
     )
@@ -913,7 +916,7 @@ def preparing_menu_deinit():
 
 def surrender():
     prelogic.safesend(prelogic.ActiveConnection, messages.surrender_game_message())
-    game.set_gamestate(common.GameState.MAIN_MENU)
+    game.set_gamestate(prelogic.return_state)
 
 def end_game():
     prelogic.looking_game_results = True
@@ -934,7 +937,7 @@ def end_game():
             button_left= ui.ButtonInteractive(
                 text= "Go back",
                 position=(0,0),
-                callback= task.BasicTask(game.set_gamestate, common.GameState.MAIN_MENU),
+                callback= task.BasicTask(game.set_gamestate, prelogic.return_state),
                 font = ui.Font30
             )
         )
