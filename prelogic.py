@@ -4,7 +4,7 @@ from game import connection
 from game import common # type: ignore
 from common import task
 from common import pygame
-import time
+# import time
 # connection = game.connection
 # common = game.common
 # task = common.task
@@ -29,20 +29,6 @@ def INFO(message: str, duration: float=3):
     message = "INFO: " + message
     ui.MBs.append(ui.MessageBox(message, duration))
 # import common
-# import tasks.task as task
-# import eventhandler
-
-def safesend(connection: connection.TCP_Sock | None, message: str | bytes) -> bool:
-    if (connection == None):
-        return False
-    try:
-        connection.send(message)
-        return True
-    except Exception as e:
-        LOG("Unable to send message")
-        print(str(e))
-        return False
-
 
 MYUSERNAME = connection.LOCAL_INFO[0]
 MYADRRESS = [ip for ip in connection.LOCAL_INFO[2] if not ip.startswith("127.")]
@@ -51,9 +37,6 @@ print(MYADRRESS, MYUSERNAME)
 
 UDP: connection.UDP_Sock | None = None
 TCP: connection.TCP_Sock | None = None
-
-ActiveConnection: connection.TCP_Sock | None = None
-LastCheckedConnection: float = time.time()
 
 return_state: str = common.GameState.CHOOSE_MODE_MENU
 
@@ -97,11 +80,18 @@ mymap_pos = (40, 40)
 mymap_tilesize = 45
 mymap_size = mymap_tilesize*10
 mymap_mouse_ipos = (0,0)
+mymap_light: tuple[int, int] = (0,0)
+mymap_from: float = 0
+mymap_for: float = 0
 
 enemymap_pos = (common.WIN_X - 40, 40)
 enemymap_tilesize = 45
 enemymap_size = enemymap_tilesize*10
 enemymap_mouse_ipos = (0,0)
+enemymap_light: tuple[int, int] = (0,0)
+enemymap_from: float = 0
+enemymap_for: float = 0
+
 
 turn_label: ui.Label | None = None
 my_left_label: ui.Label | None = None

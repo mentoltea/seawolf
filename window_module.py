@@ -1,4 +1,5 @@
 # from logic import *
+import time
 import logic
 from logic import prelogic
 from prelogic import ui
@@ -6,6 +7,7 @@ from prelogic import common
 from prelogic import game
 from common import pygame
 import random
+import math
 # import prelogic
 # import pygame
 # import common
@@ -53,7 +55,8 @@ def main_menu_window_update():
 def choose_mode_menu_window_update():
     pass
 
-def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap: list[list[int]], ships: list[tuple[ int, tuple[int,int], int]]):
+def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap: list[list[int]], ships: list[tuple[ int, tuple[int,int], int]],
+                 light:tuple[int,int]=(0,0), frm:float=0, fr:float=0):
     font = ui.Font24
     for iy in range(10):
         letter = str(iy+1)
@@ -129,6 +132,32 @@ def draw_gamemap(surf: pygame.Surface, x: int, y: int, tilesize: float, gamemap:
                 p1 = (x + ix*tilesize + random.random() * tilesize/k, y + iy*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k)
                 p2 = (x + ix*tilesize + tilesize*(k-1)/k + random.random() * tilesize/k, y + iy*tilesize + random.random() * tilesize/k)
                 pygame.draw.line(common.window, ui.RED, p1, p2, 3)
+    
+    if (time.time() - frm < fr):
+        (ix, iy) = light
+        if (gamemap[iy][ix] in [game.CellType.SHOT, game.CellType.KILLED]): 
+            num = random.randint(4, 9)
+            pts: list[tuple[float, float]] = []
+            phi_seq: list[tuple[float, float]] = []
+            lradK = 0.45 + 0.2*random.random()
+            for _ in range(num):
+                phi = random.random() * 2 * math.pi
+                if (lradK < 0.55):
+                    radK = lradK + 0.3*random.random()
+                else:
+                    radK = lradK - 0.3*random.random()
+                lradK = radK
+                phi_seq.append( (phi, radK) )
+            phi_seq.sort(key= lambda t: t[0])
+                
+            for (phi, radK) in phi_seq:
+                pts.append(
+                    (
+                        x + ix*tilesize + tilesize/2 + math.cos(phi)*tilesize/2*radK,
+                        y + iy*tilesize + tilesize/2 + math.sin(phi)*tilesize/2*radK,
+                    )
+                )
+            pygame.draw.polygon(common.window, ui.ORANGE, pts)
 
 def preparing_menu_window_update():
     if (game.game):
@@ -164,8 +193,10 @@ def preparing_menu_window_update():
 
 def game_menu_window_update():
     if (game.game):
-        draw_gamemap(common.window, *prelogic.mymap_pos, prelogic.mymap_tilesize, game.game.mymap, game.game.my_ships)
-        draw_gamemap(common.window, *prelogic.enemymap_pos, prelogic.enemymap_tilesize, game.game.enemymap, game.game.enemy_ships)
+        draw_gamemap(common.window, *prelogic.mymap_pos, prelogic.mymap_tilesize, game.game.mymap, game.game.my_ships,
+                     prelogic.mymap_light, prelogic.mymap_from, prelogic.mymap_for)
+        draw_gamemap(common.window, *prelogic.enemymap_pos, prelogic.enemymap_tilesize, game.game.enemymap, game.game.enemy_ships,
+                     prelogic.enemymap_light, prelogic.enemymap_from, prelogic.enemymap_for)
 
 def window_update():
     common.wn.fill((0,0,0))

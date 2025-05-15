@@ -43,6 +43,8 @@ BLUE = (0, 0, 255)
 LIGHTBLUE = (50, 50, 150)
 VERYLIGHTBLUE = (35, 35, 210)
 
+ORANGE = (255, 128, 0)
+LIGHTORANGE = (200, 150, 30)
 
 def color_inverse(color: tuple[int,int,int]):
     return (255-color[0], 255-color[1], 255-color[2])

@@ -3,6 +3,7 @@ import json
 import time
 import random
 import eventhandler # type: ignore
+from eventhandler import bot
 from eventhandler import messages
 from messages import prelogic
 from prelogic import ui
@@ -59,7 +60,7 @@ def successfull_connection(username: str, addr: tuple[str,str]):
     if (prelogic.TCP): print(prelogic.TCP.recv(2))
     # check_conn_task = task.ThreadTask(check_connection_alive, username, addr)
     # check_conn_task()
-    prelogic.ActiveConnection = prelogic.TCP
+    eventhandler.ActiveConnection = prelogic.TCP
     
     # game.gamestate = common.GameState.PREPARING_MENU
     game.set_gamestate(common.GameState.PREPARING_MENU)
@@ -68,7 +69,7 @@ def connect_to(username: str, addr: tuple[str,str], port: str):
     try:
         prelogic.TCP = connection.TCP_Sock(addr[0], port, is_server=False)
         # prelogic.TCP.send("Success from client")
-        prelogic.safesend(prelogic.TCP, "Success from client")
+        eventhandler.safesend(prelogic.TCP, "Success from client")
         successfull_connection(username, addr)
     except Exception as e:
         prelogic.ERROR(str(e))
@@ -83,7 +84,7 @@ def wait_connection(username: str, addr: tuple[str,str], sleeptime: float, times
             break
         if (prelogic.TCP.connected):
             # prelogic.TCP.send("Success from server")
-            prelogic.safesend(prelogic.TCP, "Success from server")
+            eventhandler.safesend(prelogic.TCP, "Success from server")
             successfull_connection(username, addr)
             return
     if (not prelogic.TCP or not prelogic.TCP.connected):
@@ -280,9 +281,9 @@ def all_update():
             
         
 def main_menu_init():
-    if (prelogic.ActiveConnection):
-        prelogic.ActiveConnection.stop()
-        prelogic.ActiveConnection = None
+    if (eventhandler.ActiveConnection):
+        eventhandler.ActiveConnection.stop()
+        eventhandler.ActiveConnection = None
     
     if (prelogic.TCP):
         prelogic.TCP.stop()
@@ -428,6 +429,10 @@ def main_menu_deinit():
     if (prelogic.open_hosts_update_task != None):
         prelogic.open_hosts_update_task = None
     
+def play_singleplayer():
+    server = bool(random.randint(0,1))
+    eventhandler.ActiveConnection = bot.Bot_Sock(server)
+    game.set_gamestate(common.GameState.PREPARING_MENU)
 
 def choose_mode_menu_init():
     common.change_window_size((300, 200))
@@ -437,7 +442,7 @@ def choose_mode_menu_init():
     singleplayer_button = ui.ButtonInteractive(
         text="Singleplayer",
         position=(0,0),
-        callback= task.BasicTask(print, "Not implemented yet"),
+        callback= task.BasicTask(play_singleplayer),
         font=ui.Font24
     )
     singleplayer_button.position = (common.WIN_X/2 - singleplayer_button.size_x/2,
@@ -473,31 +478,31 @@ def choose_mode_menu_deinit():
     pass
 
 def connection_check_func(sec_per_check: float = 3):
-    while (prelogic.ActiveConnection != None and prelogic.ActiveConnection.connected):
-        if (time.time() - sec_per_check >= prelogic.LastCheckedConnection):
-            if not prelogic.safesend(prelogic.ActiveConnection, messages.check_conn_message()):
+    while (eventhandler.ActiveConnection != None and eventhandler.ActiveConnection.connected):
+        if (time.time() - sec_per_check >= eventhandler.LastCheckedConnection):
+            if not eventhandler.safesend(eventhandler.ActiveConnection, messages.check_conn_message()):
                 if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
                 return
-            if not prelogic.ActiveConnection.connected:
+            if not eventhandler.ActiveConnection.connected:
                 if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
                 return
-            prelogic.LastCheckedConnection = time.time()
+            eventhandler.LastCheckedConnection = time.time()
         time.sleep(sec_per_check)
     if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
 
 def prep_menu_game_menu_data_recv_func(interval: float = 1):
     while (game.gamestate in [common.GameState.PREPARING_MENU, common.GameState.GAME_MENU]):
-        if (prelogic.ActiveConnection == None or prelogic.ActiveConnection.connected == False):
+        if (eventhandler.ActiveConnection == None or eventhandler.ActiveConnection.connected == False):
             if (not prelogic.looking_game_results): game.set_gamestate(prelogic.return_state)
             return
         
-        rcv = prelogic.ActiveConnection.recv(interval/2)
+        rcv = eventhandler.ActiveConnection.recv(interval/2)
         if (rcv == None): continue
         
         datas = rcv.decode("utf-8").split(messages.TCP_DELIMITER)
         for data in datas:
             if data == "": continue
-            print(data)
+            prelogic.LOG(data)
             # data = data.removeprefix(messages.TCP_DELIMITER).removesuffix(messages.TCP_DELIMITER)
             try:
                 jsondata = json.loads(data)
@@ -505,7 +510,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
             
                 match (mtype):
                     case common.MessageType.CHECK_CONN:
-                        prelogic.LastCheckedConnection = time.time()
+                        eventhandler.LastCheckedConnection = time.time()
                     
                     case common.MessageType.GAME_EVENT:
                         event: dict[str, typing.Any] = jsondata["event"]
@@ -539,9 +544,9 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                         prelogic.opponent_ready_label.fontcolor = ui.LIGHTGREEN
                                         
                                     if (game.game.ready):
-                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_appr_message())
+                                        eventhandler.safesend( eventhandler.ActiveConnection, messages.start_game_appr_message())
                                     else:
-                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
+                                        eventhandler.safesend( eventhandler.ActiveConnection, messages.start_game_decl_message())
                             
                             case common.GameEventType.START_GAME_DECLINE:
                                 if (game.gamestate != common.GameState.PREPARING_MENU): continue
@@ -558,10 +563,10 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 
                                 if game.game:
                                     if game.game.ready:
-                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_sappr_message())
+                                        eventhandler.safesend( eventhandler.ActiveConnection, messages.start_game_sappr_message())
                                         game.set_gamestate(common.GameState.GAME_MENU)
                                     else:
-                                        prelogic.safesend( prelogic.ActiveConnection, messages.start_game_decl_message())
+                                        eventhandler.safesend( eventhandler.ActiveConnection, messages.start_game_decl_message())
                             
                             case common.GameEventType.START_GAME_SECOND_APPROVE:
                                 if (game.gamestate != common.GameState.PREPARING_MENU): continue
@@ -576,7 +581,7 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 if (game.gamestate != common.GameState.GAME_MENU): continue
                                 
                                 prelogic.looking_game_results = True
-                                prelogic.ActiveConnection.connected = False
+                                eventhandler.ActiveConnection.connected = False
                                 
                                 ui.dialogs.append(
                                     ui.Dialog(
@@ -607,25 +612,31 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                     cell = game.game.mymap[iy][ix]
                                     match cell:
                                         case game.CellType.HIDDEN:
-                                            prelogic.safesend( prelogic.ActiveConnection, messages.move_empty_message(move))
+                                            eventhandler.safesend( eventhandler.ActiveConnection, messages.move_empty_message(move))
                                             game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.EMPTY)
+                                            prelogic.mymap_light = (ix, iy)
+                                            prelogic.mymap_from = time.time()
+                                            prelogic.mymap_for = 1
                                             set_turn(0)
                                         
                                         case game.CellType.BOAT:
                                             game.game.mymap[iy][ix] = game.CellType.SHOT
                                             if (game.isKilled(game.game, game.game.mymap, ix, iy)):
-                                                prelogic.safesend( prelogic.ActiveConnection, messages.move_killed_message(move))
+                                                eventhandler.safesend( eventhandler.ActiveConnection, messages.move_killed_message(move))
                                                 game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.KILLED)
                                             else:
-                                                prelogic.safesend( prelogic.ActiveConnection, messages.move_shot_message(move))
+                                                eventhandler.safesend( eventhandler.ActiveConnection, messages.move_shot_message(move))
                                                 game.set_move_mymap(game.game, game.game.mymap, ix, iy, game.CellType.SHOT)
                                             if (check_win() != 0):
                                                 end_game()
+                                            prelogic.mymap_light = (ix, iy)
+                                            prelogic.mymap_from = time.time()
+                                            prelogic.mymap_for = 1
                                             set_turn(1)
                                         
                                         case _:
                                             prelogic.LOG(move + " " + str(cell))
-                                            prelogic.safesend( prelogic.ActiveConnection, messages.bad_move_message(move))
+                                            eventhandler.safesend( eventhandler.ActiveConnection, messages.bad_move_message(move))
                                     left_labels_update()
                             
                             case common.GameEventType.MOVE_EMPTY:
@@ -635,6 +646,9 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 (ix, iy) = game.pos2xy(move)
                                 if game.game:
                                     game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.EMPTY)
+                                prelogic.enemymap_light = (ix, iy)
+                                prelogic.enemymap_from = time.time()
+                                prelogic.enemymap_for = 1
                                 set_turn(1)
                                 
                             case common.GameEventType.MOVE_SHOT:
@@ -644,6 +658,9 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 (ix, iy) = game.pos2xy(move)
                                 if game.game:
                                     game.set_move_enemymap(game.game, game.game.enemymap, ix, iy, game.CellType.SHOT)
+                                prelogic.enemymap_light = (ix, iy)
+                                prelogic.enemymap_from = time.time()
+                                prelogic.enemymap_for = 1
                                 set_turn(0)
                             
                             case common.GameEventType.MOVE_KILLED:
@@ -656,6 +673,9 @@ def prep_menu_game_menu_data_recv_func(interval: float = 1):
                                 left_labels_update()
                                 if (check_win() != 0):
                                     end_game()
+                                prelogic.enemymap_light = (ix, iy)
+                                prelogic.enemymap_from = time.time()
+                                prelogic.enemymap_for = 1
                                 set_turn(0)
                             
                             case common.GameEventType.BAD_MOVE:
@@ -697,18 +717,18 @@ def set_ready(state: bool):
             prelogic.ready_button.set_text("I Am Not Ready")
             prelogic.ready_button.fontcolor = ui.VERYLIGHTRED
             
-    if (prelogic.ActiveConnection):
+    if (eventhandler.ActiveConnection):
         if state:
-            prelogic.safesend(prelogic.ActiveConnection, messages.ready_message())
+            eventhandler.safesend(eventhandler.ActiveConnection, messages.ready_message())
         else:
-            prelogic.safesend(prelogic.ActiveConnection, messages.unready_message())
+            eventhandler.safesend(eventhandler.ActiveConnection, messages.unready_message())
     
 def swicth_ready():
     if (game.game):
         current = game.game.ready
         set_ready(not current)
         if (game.game.ready and game.game.opponent_ready):
-            prelogic.safesend(prelogic.ActiveConnection, messages.ask_start_game_message())
+            eventhandler.safesend(eventhandler.ActiveConnection, messages.ask_start_game_message())
 
 def place_back_ship():
     if (prelogic.holding_ship):
@@ -791,10 +811,11 @@ def preparing_menu_init():
 
     prelogic.current_ships = game.SHIPS_COUNT.copy()
     
-    if (prelogic.ActiveConnection == None):
-        game.gamestate = common.GameState.MAIN_MENU
+    if (eventhandler.ActiveConnection == None):
+        # game.gamestate = common.GameState.MAIN_MENU
+        game.set_gamestate(prelogic.return_state)
         return
-    if prelogic.ActiveConnection.is_server:
+    if eventhandler.ActiveConnection.is_server:
         game.game.turn = 0
     else:
         game.game.turn = 1
@@ -915,14 +936,14 @@ def preparing_menu_deinit():
     prelogic.current_ships_buttons.clear()
 
 def surrender():
-    prelogic.safesend(prelogic.ActiveConnection, messages.surrender_game_message())
+    eventhandler.safesend(eventhandler.ActiveConnection, messages.surrender_game_message())
     game.set_gamestate(prelogic.return_state)
 
 def end_game():
     prelogic.looking_game_results = True
     
-    prelogic.safesend(prelogic.ActiveConnection, messages.end_game_message())
-    if (prelogic.ActiveConnection): prelogic.ActiveConnection.connected = False
+    eventhandler.safesend(eventhandler.ActiveConnection, messages.end_game_message())
+    if (eventhandler.ActiveConnection): eventhandler.ActiveConnection.connected = False
     
     w = check_win()
     
@@ -996,14 +1017,15 @@ def make_move(ix: int, iy: int):
     if game.game.turn != 0: return
     if (game.game.enemymap[iy][ix] != game.CellType.UNKNOWN):
         prelogic.INFO("Bad move - the cell is already opened")
+        return
     
-    prelogic.safesend(prelogic.ActiveConnection, messages.make_move_message(game.xy2pos(ix, iy)))
+    eventhandler.safesend(eventhandler.ActiveConnection, messages.make_move_message(game.xy2pos(ix, iy)))
     # waiting
     set_turn(2)
         
 def game_menu_init():
     common.change_window_size((1080,720))
-    if (not prelogic.ActiveConnection):
+    if (not eventhandler.ActiveConnection):
         return
     if (not game.game):
         return
@@ -1096,7 +1118,7 @@ def game_menu_init():
     
     left_labels_update()
     
-    if prelogic.ActiveConnection.is_server:
+    if eventhandler.ActiveConnection.is_server:
         game.game.turn = 0
     else:
         game.game.turn = 1

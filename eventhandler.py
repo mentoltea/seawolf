@@ -1,7 +1,12 @@
 # from common import *
 # import prelogic
-import messages # type: ignore
+# import messages # type: ignore
+import time
+
+import bot
+from bot import messages
 from messages import prelogic
+from prelogic import connection
 
 class EventHandler:
     @staticmethod
@@ -68,4 +73,20 @@ class EventHandler:
     @staticmethod
     def quit():
         pass
-    
+
+
+
+ActiveConnection: connection.TCP_Sock | bot.Bot_Sock | None = None
+LastCheckedConnection: float = time.time()
+
+
+def safesend(connection: connection.TCP_Sock | bot.Bot_Sock | None, message: str | bytes) -> bool:
+    if (connection == None):
+        return False
+    try:
+        connection.send(message)
+        return True
+    except Exception as e:
+        prelogic.LOG("Unable to send message")
+        print(str(e))
+        return False

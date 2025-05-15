@@ -5,7 +5,7 @@ from logic import common
 from common import pygame
 
 
-prelogic.LOGS_ENABLED = True
+prelogic.LOGS_ENABLED = False
 tick = 0
 
 while common.RUN:

@@ -1,5 +1,6 @@
-import prelogic
 import typing
+
+import prelogic
 from prelogic import common
 from common import json
 # common = prelogic.common

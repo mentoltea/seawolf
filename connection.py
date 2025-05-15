@@ -1,7 +1,4 @@
-# from common import *
-# from eventhandler import *
-# import common
-# import eventhandler
+
 import common # type: ignore
 from common import socket
 from common import time
@@ -86,7 +83,7 @@ class TCP_Sock:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.conn = None
-        self.connected = False
+        self.connected: bool = False
         self.stopflag = False
         self.is_server = is_server
         if is_server:
